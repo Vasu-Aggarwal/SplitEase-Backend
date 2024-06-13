@@ -1,5 +1,6 @@
 package com.vr.SplitEase.entity;
 
+import com.vr.SplitEase.config.constants.SplitBy;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,14 +11,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "group")
 @Entity
-public class Group extends Auditable{
+@Table(name = "transaction")
+public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer groupId;
-
-    private String name;
-    private Double totalAmount;
-    private String status;
+    private Integer transactionId;
+    private Double amount;
+    private SplitBy splitBy;
 }

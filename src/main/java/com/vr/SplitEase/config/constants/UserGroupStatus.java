@@ -1,15 +1,17 @@
-package com.vr.SplitEase.config;
+package com.vr.SplitEase.config.constants;
 
 import lombok.Getter;
 
 @Getter
-public enum GroupStatus {
+public enum UserGroupStatus {
+
     ACTIVE(1),
-    INACTIVE(2),
+    INACTIVE(0),
     DELETED(3);
 
     private final Integer status;
-    GroupStatus(Integer status) {
+    UserGroupStatus(Integer status){
         this.status = status;
     }
+
 }

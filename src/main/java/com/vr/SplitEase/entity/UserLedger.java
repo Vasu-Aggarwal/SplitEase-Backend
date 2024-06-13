@@ -6,18 +6,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "group")
+@Getter
+@Setter
 @Entity
-public class Group extends Auditable{
+@Table(name = "user_ledger")
+public class UserLedger {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer groupId;
+    private Integer ledgerId;
 
-    private String name;
-    private Double totalAmount;
-    private String status;
+    private User user;
+    private Transaction transaction;
+    private String owedOrLent;
+    private User lentFrom;
+    private Double amount;
+    private Integer isActive;
+
 }
