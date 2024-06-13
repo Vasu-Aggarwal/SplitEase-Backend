@@ -19,8 +19,10 @@ public class UserGroupLedger {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userGroupLedgerId;
 
+    @ManyToOne
     private User user;
 
+    @ManyToOne
     private Group group;
 
     private Double totalOwed;
