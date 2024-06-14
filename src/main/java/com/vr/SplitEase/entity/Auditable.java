@@ -1,5 +1,6 @@
 package com.vr.SplitEase.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MappedSuperclass;
@@ -17,10 +18,10 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class Auditable {
     @CreationTimestamp
-    @JoinColumn(name = "created_on")
+    @Column(name = "created_on")
     private LocalDateTime createdOn;
 
     @LastModifiedDate
-    @JoinColumn(name = "modified_on")
+    @Column(name = "modified_on")
     private LocalDateTime modifiedOn;
 }

@@ -1,6 +1,6 @@
 package com.vr.SplitEase.entity;
 
-import com.vr.SplitEase.config.constants.UserGroupStatus;
+import com.vr.SplitEase.config.constants.GroupStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,10 +21,10 @@ public class UserGroupLedger extends Auditable{
     private Integer userGroupLedgerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_uuid")
     private User user;
 
-    @JoinColumn(name = "group")
+    @JoinColumn(name = "group_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Group group;
 
@@ -32,6 +32,7 @@ public class UserGroupLedger extends Auditable{
     private Double totalOwed;
     @Column(name = "total_lent")
     private Double totalLent;
-    private UserGroupStatus status;
+    @Enumerated(EnumType.ORDINAL)
+    private GroupStatus status;
 
 }

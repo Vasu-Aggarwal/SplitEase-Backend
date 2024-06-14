@@ -3,15 +3,14 @@ package com.vr.SplitEase.config.constants;
 import lombok.Getter;
 
 @Getter
-public enum UserGroupStatus {
-
+public enum LedgerStatus {
     ACTIVE(1),
     INACTIVE(0),
-    DELETED(3);
+    DELETED(3),
+    SETTLED(2);
 
     private final Integer status;
-    UserGroupStatus(Integer status){
+    LedgerStatus(Integer status) {
         this.status = status;
     }
-
 }

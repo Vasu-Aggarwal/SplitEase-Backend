@@ -36,4 +36,10 @@ public class User extends Auditable {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserLedger> userLedger = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Transaction> transactions = new HashSet<>();
+
+    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserLedger> userLentFrom = new HashSet<>();
 }

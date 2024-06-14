@@ -1,5 +1,6 @@
 package com.vr.SplitEase.entity;
 
+import com.vr.SplitEase.config.constants.LedgerStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "user_ledger")
-public class UserLedger {
+public class UserLedger extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,18 +21,23 @@ public class UserLedger {
     private Integer ledgerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_uuid")
     private User user;
 
-    @JoinColumn(name = "transaction")
+    @JoinColumn(name = "transaction_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Transaction transaction;
+
     @Column(name = "owed_or_lent", nullable = false)
     private String owedOrLent;
-    @Column(name = "lent_from")
-    private User lentFrom;
+
     private Double amount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lent_from")
+    private User lentFrom;
+
     @Column(name = "is_active")
-    private Integer isActive;
+    private LedgerStatus isActive;
 
 }
