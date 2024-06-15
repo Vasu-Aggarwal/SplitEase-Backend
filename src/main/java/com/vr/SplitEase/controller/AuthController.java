@@ -2,6 +2,7 @@ package com.vr.SplitEase.controller;
 
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.JwtRequest;
+import com.vr.SplitEase.dto.request.RefreshTokenRequest;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.JwtResponse;
 import com.vr.SplitEase.entity.RefreshToken;
@@ -83,16 +84,16 @@ public class AuthController {
 //        return new ResponseEntity<>(user, HttpStatus.CREATED);
 //    }
 
-//    @PostMapping("/refreshToken")
-//    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
-//        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenRequest.getRefreshToken());
-//        User user = refreshToken.getUser();
-//        String token = helper.generateToken(user);
-//        return new ResponseEntity<>(JwtResponse.builder()
-//                .refreshToken(refreshToken.getRefreshToken())
-//                .token(token)
-//                .build(), HttpStatus.OK);
-//    }
+    @PostMapping("/refreshToken")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenRequest.getRefreshToken());
+        User user = refreshToken.getUser();
+        String token = helper.generateToken(user);
+        return new ResponseEntity<>(JwtResponse.builder()
+                .refreshToken(refreshToken.getRefreshToken())
+                .token(token)
+                .build(), HttpStatus.OK);
+    }
 
     private void doAuthenticate(String username, String password) {
 
