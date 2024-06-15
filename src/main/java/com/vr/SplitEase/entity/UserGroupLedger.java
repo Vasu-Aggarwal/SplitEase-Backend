@@ -32,7 +32,6 @@ public class UserGroupLedger extends Auditable{
     private Double totalOwed;
     @Column(name = "total_lent")
     private Double totalLent;
-    @Enumerated(EnumType.ORDINAL)
-    private GroupStatus status;
+    private Integer status;
 
 }

@@ -6,6 +6,7 @@ import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
 import com.vr.SplitEase.entity.Group;
+import com.vr.SplitEase.entity.User;
 import com.vr.SplitEase.entity.UserGroupLedger;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -21,14 +22,17 @@ import java.util.Objects;
 @Service
 public class GroupServiceImpl implements GroupService {
 
-    @Autowired
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
+    private final GroupRepository groupRepository;
+    private final UserGroupLedgerRepository userGroupLedgerRepository;
+    private final CurrentUserService currentUserService;
 
-    @Autowired
-    private GroupRepository groupRepository;
-
-    @Autowired
-    private UserGroupLedgerRepository userGroupLedgerRepository;
+    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService) {
+        this.modelMapper = modelMapper;
+        this.groupRepository = groupRepository;
+        this.userGroupLedgerRepository = userGroupLedgerRepository;
+        this.currentUserService = currentUserService;
+    }
 
 
     @Override
@@ -42,16 +46,19 @@ public class GroupServiceImpl implements GroupService {
             } else {
                 throw new BadApiRequestException("Cannot update inactive group.");
             }
+            groupRepository.save(group);
         } else {
             group = modelMapper.map(addGroupRequest, Group.class);
             group.setStatus(GroupStatus.ACTIVE.getStatus());
             group.setTotalAmount(0.0);
-
+            groupRepository.save(group);
             //Add the user (who is creating the group) to the group
             UserGroupLedger userGroupLedger = new UserGroupLedger();
-//            userGroupLedger.setUser();
+            userGroupLedger.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
+            userGroupLedger.setGroup(group);
+            userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
+            userGroupLedgerRepository.save(userGroupLedger);
         }
-        groupRepository.save(group);
         return modelMapper.map(group, AddGroupResponse.class);
     }
 

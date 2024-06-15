@@ -16,19 +16,14 @@ public class AuditorAwareImpl implements AuditorAware<String> {
     @Autowired
     private UserRepository userRepository;
 
+    private final CurrentUserService currentUserService;
+
+    public AuditorAwareImpl(CurrentUserService currentUserService) {
+        this.currentUserService = currentUserService;
+    }
+
     @Override
     public Optional<String> getCurrentAuditor() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Optional.empty();
-        }
-        Object principal = authentication.getPrincipal();
-
-        if (principal instanceof UserDetails) {
-            User user = userRepository.findByEmail(((UserDetails) principal).getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            return Optional.of(user.getUserUuid());
-        } else {
-            return Optional.of(principal.toString());
-        }
+        return currentUserService.getCurrentUserUuid();
     }
 }
