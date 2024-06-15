@@ -1,5 +1,6 @@
 package com.vr.SplitEase.entity;
 
+import com.vr.SplitEase.config.constants.GroupStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +26,7 @@ public class Group extends Auditable{
     private String name;
     @Column(name = "total_amount")
     private Double totalAmount;
-    private String status;
+    private Integer status;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserGroupLedger> userGroups = new HashSet<>();
