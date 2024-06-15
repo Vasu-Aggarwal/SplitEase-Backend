@@ -34,7 +34,7 @@ public class UserServiceImpl implements UserService {
     public CreateUserResponse addUpdateUser(CreateUserRequest createUserRequest) {
         User user = new User();
         //Update existing user if uuid is present in the request
-        if (!createUserRequest.getUserUuid().isBlank()){
+        if (createUserRequest.getUserUuid() != null && !createUserRequest.getUserUuid().isBlank()){
             user = userRepository.findById(createUserRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             user.setEmail(createUserRequest.getEmail());
             user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
@@ -43,9 +43,9 @@ public class UserServiceImpl implements UserService {
         } else {
             //Create new user
             //set role
+            user = modelMapper.map(createUserRequest, User.class);
             Role role = this.roleRepository.findById(2).get();
             user.getRoles().add(role);
-            user = modelMapper.map(createUserRequest, User.class);
         }
         userRepository.save(user);
         return modelMapper.map(user, CreateUserResponse.class);

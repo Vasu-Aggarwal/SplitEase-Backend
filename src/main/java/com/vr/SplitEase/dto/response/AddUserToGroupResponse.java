@@ -10,5 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AddUserToGroupResponse {
-    private String me;
+    private String message;
 }

@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@Table(name = "user_group_ledger")
+@Table(name = "user_group_ledger", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_uuid", "group_id"})})
 public class UserGroupLedger extends Auditable{
 
     @Id
