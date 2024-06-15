@@ -1,6 +1,7 @@
 package com.vr.SplitEase.dto.request;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -17,17 +18,17 @@ public class CreateUserRequest {
     private String userUuid;
 
     @NotNull(message = "Name cannot be null")
-    @NotEmpty(message = "Name cannot be empty")
+    @NotBlank(message = "Name cannot be empty")
     private String name;
 
     @NotNull(message = "Password cannot be null")
-    @NotEmpty(message = "Password cannot be empty")
+    @NotBlank(message = "Password cannot be empty")
     private String password;
 
     @Email(message = "Please enter valid email")
     private String email;
 
-    @NotEmpty(message = "Mobile number cannot be empty")
+    @NotBlank(message = "Mobile number cannot be empty")
     @NotNull(message = "Mobile number cannot be null")
     private String mobile;
 }
