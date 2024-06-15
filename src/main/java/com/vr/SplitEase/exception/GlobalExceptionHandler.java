@@ -1,8 +1,10 @@
 package com.vr.SplitEase.exception;
 
 import com.vr.SplitEase.dto.response.BadApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +37,27 @@ public class GlobalExceptionHandler {
         String message = badApiRequestException.getMessage();
         BadApiResponse badApiResponse = new BadApiResponse(message, 0);
         return new ResponseEntity<>(badApiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<BadApiResponse> duplicateEntry(DataIntegrityViolationException ex){
+        String message = ex.getMessage();
+        BadApiResponse badApiResponse = new BadApiResponse(message, 0);
+        return new ResponseEntity<>(badApiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadCredentialException.class)
+    public ResponseEntity<BadApiResponse> badCredentials(BadCredentialException ex){
+        String message = ex.getMessage();
+        BadApiResponse badApiResponse = new BadApiResponse(message, 0);
+        return new ResponseEntity<>(badApiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<BadApiResponse> authenticationException(AuthenticationException ex){
+        String message = ex.getMessage();
+        BadApiResponse badApiResponse = new BadApiResponse(message, 0);
+        return new ResponseEntity<>(badApiResponse, HttpStatus.UNAUTHORIZED);
     }
 
 }
