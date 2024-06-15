@@ -3,13 +3,16 @@ package com.vr.SplitEase.service.impl;
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
+import com.vr.SplitEase.entity.Role;
 import com.vr.SplitEase.entity.User;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
+import com.vr.SplitEase.repository.RoleRepository;
 import com.vr.SplitEase.repository.UserRepository;
 import com.vr.SplitEase.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,24 +20,31 @@ public class UserServiceImpl implements UserService {
 
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository) {
+    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public CreateUserResponse addUpdateUser(CreateUserRequest createUserRequest) {
-        User user;
+        User user = new User();
         //Update existing user if uuid is present in the request
         if (!createUserRequest.getUserUuid().isBlank()){
             user = userRepository.findById(createUserRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             user.setEmail(createUserRequest.getEmail());
-            user.setPassword(createUserRequest.getPassword());
+            user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
             user.setMobile(createUserRequest.getMobile());
             user.setName(createUserRequest.getName());
         } else {
             //Create new user
+            //set role
+            Role role = this.roleRepository.findById(2).get();
+            user.getRoles().add(role);
             user = modelMapper.map(createUserRequest, User.class);
         }
         userRepository.save(user);
