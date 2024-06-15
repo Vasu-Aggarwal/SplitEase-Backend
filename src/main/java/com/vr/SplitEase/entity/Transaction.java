@@ -33,6 +33,7 @@ public class Transaction extends Auditable{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+    private String description;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserLedger> userLedger = new HashSet<>();
