@@ -16,5 +16,5 @@ public interface UserService {
     CreateUserResponse getUserByUuid(String userUuid);
 
     //Get user by email or mobile
-    CreateUserResponse getUserByEmailOrMobile(SearchUserByEmailMobileRequest);
+    CreateUserResponse getUserByEmailOrMobile(SearchUserByEmailMobileRequest searchUserByEmailMobileRequest); //deferred for now
 }

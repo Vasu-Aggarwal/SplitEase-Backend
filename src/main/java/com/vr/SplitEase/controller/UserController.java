@@ -5,6 +5,7 @@ import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.service.UserService;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,12 @@ public class UserController {
     public ResponseEntity<DeleteResponse> deleteUser(@PathVariable String userUuid){
         userService.deleteUser(userUuid);
         return new ResponseEntity<>(new DeleteResponse("User deleted"), HttpStatus.OK);
+    }
+
+    @GetMapping("/getUserByUuid/{userUuid}")
+    public ResponseEntity<CreateUserResponse> getUserByUuid(@PathVariable String userUuid){
+        CreateUserResponse createUserResponse = userService.getUserByUuid(userUuid);
+        return new ResponseEntity<>(createUserResponse, HttpStatus.OK);
     }
 
 }

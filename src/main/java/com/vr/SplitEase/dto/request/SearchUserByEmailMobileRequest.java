@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SearchUserByEmailMobileRequest {
+    private String userUuid;
     private String email;
     private String mobile;
 }
