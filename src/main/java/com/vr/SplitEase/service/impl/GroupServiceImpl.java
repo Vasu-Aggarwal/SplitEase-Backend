@@ -6,7 +6,6 @@ import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
 import com.vr.SplitEase.entity.Group;
-import com.vr.SplitEase.entity.User;
 import com.vr.SplitEase.entity.UserGroupLedger;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -14,7 +13,6 @@ import com.vr.SplitEase.repository.GroupRepository;
 import com.vr.SplitEase.repository.UserGroupLedgerRepository;
 import com.vr.SplitEase.service.GroupService;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;

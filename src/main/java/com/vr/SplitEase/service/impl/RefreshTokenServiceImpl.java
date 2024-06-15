@@ -18,11 +18,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     public long refreshTokenValidity = 5*60*60*1000;   //5 hr
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public RefreshTokenServiceImpl(RefreshTokenRepository refreshTokenRepository, UserRepository userRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.userRepository = userRepository;
+    }
 
     @Override
     public RefreshToken createRefreshToken(String email) {

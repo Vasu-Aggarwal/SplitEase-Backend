@@ -15,11 +15,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository) {
+        this.modelMapper = modelMapper;
+        this.userRepository = userRepository;
+    }
 
     @Override
     public CreateUserResponse addUpdateUser(CreateUserRequest createUserRequest) {
