@@ -17,6 +17,7 @@ import com.vr.SplitEase.service.GroupService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ public class GroupServiceImpl implements GroupService {
 
 
     @Override
+    @Transactional
     public AddGroupResponse addUpdateGroup(AddGroupRequest addGroupRequest) {
         Group group;
         if (addGroupRequest.getGroupId() != null){
@@ -72,6 +74,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public AddUserToGroupResponse addUsersToGroup(AddUserToGroupRequest addUserToGroupRequest) {
         Set<User> users = addUserToGroupRequest.getUserList().stream().map(userEmail ->
                 userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException(String.format("User with email: %s not found", userEmail))))
