@@ -10,4 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AddUserToGroupRequest {
+    private String me;
 }

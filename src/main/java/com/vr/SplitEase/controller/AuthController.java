@@ -4,11 +4,13 @@ import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.JwtRequest;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.JwtResponse;
+import com.vr.SplitEase.entity.RefreshToken;
 import com.vr.SplitEase.entity.User;
 import com.vr.SplitEase.exception.BadCredentialException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.UserRepository;
 import com.vr.SplitEase.security.JwtHelper;
+import com.vr.SplitEase.service.RefreshTokenService;
 import com.vr.SplitEase.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -38,8 +40,8 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-//    @Autowired
-//    private RefreshTokenService refreshTokenService;
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     @Autowired
     private UserRepository userRepository;
@@ -59,10 +61,10 @@ public class AuthController {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
         String token = this.helper.generateToken(userDetails);
-//        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername());
         User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         JwtResponse response = JwtResponse.builder()
-//                .refreshToken(refreshToken.getRefreshToken())
+                .refreshToken(refreshToken.getRefreshToken())
                 .token(token)
                 .userUuid(user.getUserUuid())
                 .build();
