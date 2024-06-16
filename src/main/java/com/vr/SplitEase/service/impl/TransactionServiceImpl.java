@@ -42,7 +42,6 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest) {
-        try {
             //find the user who is paying in the transaction
             User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             //find the group
@@ -131,8 +130,5 @@ public class TransactionServiceImpl implements TransactionService {
 
             AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
             return addTransactionResponse;
-        } catch (Exception e){
-            throw new BadApiRequestException("Something went wrong");
-        }
     }
 }
