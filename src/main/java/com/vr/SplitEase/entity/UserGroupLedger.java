@@ -1,6 +1,5 @@
 package com.vr.SplitEase.entity;
 
-import com.vr.SplitEase.config.constants.GroupStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(name = "user_group_ledger", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_uuid", "group_id"})})
-public class UserGroupLedger extends Auditable{
+public class UserGroupLedger{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -54,7 +54,7 @@ public class TransactionServiceImpl implements TransactionService {
             transaction.setUser(user);
             transaction.setGroup(group);
             transaction.setCategory(category);
-            transactionRepository.save(transaction);
+            transaction = transactionRepository.save(transaction);
 
             //check the total amount set to all the users must be equal to the transaction amount
             Double amount = 0.0;
@@ -71,7 +71,7 @@ public class TransactionServiceImpl implements TransactionService {
             for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
                 String userEmail = entry.getKey();
                 Double userAmount = entry.getValue();
-                UserLedger userLedger = new UserLedger();
+                UserLedger userLedger;
                 UserGroupLedger userGroupLedger = new UserGroupLedger();
                 User involvedUser = userRepository.findByEmail(userEmail)
                         .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found"));
@@ -84,15 +84,24 @@ public class TransactionServiceImpl implements TransactionService {
                     userLedger.setIsActive(LedgerStatus.ACTIVE);
                     userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
                     userLedger.setAmount(userAmount);
+                    log.info("Fetching user group ledger for user: {} and group: {}", involvedUser.getUserUuid(), group.getGroupId());
 
                     //for each user update the user group ledger also
                     userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                     Double totalOwedAmount = userGroupLedger.getTotalOwed();
-                    userGroupLedger.setTotalLent(totalOwedAmount + userAmount);
+                    log.info("Updating total lent amount from {} to {}", totalOwedAmount, totalOwedAmount+userAmount);
+                    userGroupLedger.setTotalOwed(totalOwedAmount + userAmount);
                     log.info("Creating user group ledger");
-                    userGroupLedgerRepository.save(userGroupLedger);
+                    try {
+                        userGroupLedgerRepository.save(userGroupLedger);
+                        log.info("User group ledger updated successfully");
+                    } catch (StackOverflowError e) {
+                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+                        throw e;
+                    }
                     log.info("Created user group ledger");
-                } else {
+                }
+                else {
                     userLedger = new UserLedger();
                     userLedger.setTransaction(transaction);
                     userLedger.setUser(involvedUser);
@@ -105,9 +114,23 @@ public class TransactionServiceImpl implements TransactionService {
                     userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                     Double totalLentAmount = userGroupLedger.getTotalLent();
                     userGroupLedger.setTotalLent(totalLentAmount + (addTransactionRequest.getAmount() - userAmount));
-                    userGroupLedgerRepository.save(userGroupLedger);
+                    try {
+                        userGroupLedgerRepository.save(userGroupLedger);
+                        log.info("User group ledger updated successfully");
+                    } catch (StackOverflowError e) {
+                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+                        throw e;
+                    }
                 }
-                userLedgerRepository.save(userLedger);
+                log.info("Creating user ledger");
+                try {
+                    userLedgerRepository.save(userLedger);
+                    log.info("User  ledger updated successfully");
+                } catch (StackOverflowError e) {
+                    log.error("StackOverflowError while saving user  ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+                    throw e;
+                }
+                log.info("Created user ledger");
             }
 
             AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);

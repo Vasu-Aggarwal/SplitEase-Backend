@@ -21,9 +21,11 @@ import java.time.LocalDateTime;
 public class Auditable {
 
     @CreatedBy
+    @Column(name = "created_by")
     private String createdBy;
 
     @LastModifiedBy
+    @Column(name = "modified_by")
     private String modifiedBy;
 
     @CreationTimestamp
