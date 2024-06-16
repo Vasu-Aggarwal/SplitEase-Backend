@@ -15,11 +15,11 @@ import java.util.TimeZone;
 @EnableJpaAuditing
 public class Config {
 
-    private final CurrentUserService currentUserService;
-
-    public Config(CurrentUserService currentUserService) {
-        this.currentUserService = currentUserService;
-    }
+//    private final CurrentUserService currentUserService;
+//
+//    public Config(CurrentUserService currentUserService) {
+//        this.currentUserService = currentUserService;
+//    }
 
     @Bean
     public ModelMapper modelMapper(){
@@ -28,7 +28,7 @@ public class Config {
 
     @Bean
     public AuditorAware<String> auditorAware(){
-        return new AuditorAwareImpl(currentUserService);
+        return new AuditorAwareImpl();
     }
 
     @PostConstruct

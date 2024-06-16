@@ -19,12 +19,12 @@ public class UserGroupLedger{
     @Column(name = "user_group_ledger_id")
     private Integer userGroupLedgerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_uuid")
     private User user;
 
     @JoinColumn(name = "group_id")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     private Group group;
 
     @Column(name = "total_owed")

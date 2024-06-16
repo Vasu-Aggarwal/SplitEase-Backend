@@ -16,5 +16,5 @@ public class AddTransactionResponse {
     private SplitBy splitBy;
     private Integer groupId;
     private String userUuid;
-    private String category;
+    private AddCategoryResponse category;
 }

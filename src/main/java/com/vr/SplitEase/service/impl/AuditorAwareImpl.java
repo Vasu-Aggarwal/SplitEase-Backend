@@ -14,14 +14,15 @@ import java.util.Optional;
 
 public class AuditorAwareImpl implements AuditorAware<String> {
 
-    private final CurrentUserService currentUserService;
-
-    public AuditorAwareImpl(CurrentUserService currentUserService) {
-        this.currentUserService = currentUserService;
-    }
+//    private final CurrentUserService currentUserService;
+//
+//    public AuditorAwareImpl(CurrentUserService currentUserService) {
+//        this.currentUserService = currentUserService;
+//    }
 
     @Override
     public Optional<String> getCurrentAuditor() {
-        return currentUserService.getCurrentUserUuid();
+//        return currentUserService.getCurrentUserUuid();
+        return Optional.empty();
     }
 }

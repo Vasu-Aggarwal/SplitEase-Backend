@@ -26,7 +26,7 @@ public class AddTransactionRequest {
     @NotNull(message = "Split by cannot be null")
     private SplitBy splitBy;
     @NotNull(message = "Group id cannot be null")
-    private Integer groupId;
+    private Integer group;
     @NotNull(message = "User uuid cannot be null")
     @NotBlank(message = "User uuid cannot be empty")
     private String userUuid;

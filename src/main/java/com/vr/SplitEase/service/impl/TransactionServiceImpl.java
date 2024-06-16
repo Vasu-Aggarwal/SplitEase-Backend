@@ -40,22 +40,20 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest) {
         try {
             //find the user who is paying in the transaction
             User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             //find the group
-            Group group = groupRepository.findById(addTransactionRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             //find the category
             Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-
             Transaction transaction = modelMapper.map(addTransactionRequest, Transaction.class);
             transaction.setUser(user);
             transaction.setGroup(group);
             transaction.setCategory(category);
             transaction = transactionRepository.save(transaction);
-
             //check the total amount set to all the users must be equal to the transaction amount
             Double amount = 0.0;
             for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
@@ -71,13 +69,12 @@ public class TransactionServiceImpl implements TransactionService {
             for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
                 String userEmail = entry.getKey();
                 Double userAmount = entry.getValue();
-                UserLedger userLedger;
+                UserLedger userLedger = new UserLedger();
                 UserGroupLedger userGroupLedger = new UserGroupLedger();
                 User involvedUser = userRepository.findByEmail(userEmail)
                         .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found"));
 
                 if (!involvedUser.getUserUuid().equals(addTransactionRequest.getUserUuid())) {
-                    userLedger = new UserLedger();
                     userLedger.setTransaction(transaction);
                     userLedger.setUser(involvedUser);
                     userLedger.setLentFrom(user);
@@ -102,7 +99,6 @@ public class TransactionServiceImpl implements TransactionService {
                     log.info("Created user group ledger");
                 }
                 else {
-                    userLedger = new UserLedger();
                     userLedger.setTransaction(transaction);
                     userLedger.setUser(involvedUser);
                     userLedger.setLentFrom(null);

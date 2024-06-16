@@ -20,13 +20,13 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class Auditable {
 
-    @CreatedBy
-    @Column(name = "created_by")
-    private String createdBy;
-
-    @LastModifiedBy
-    @Column(name = "modified_by")
-    private String modifiedBy;
+//    @CreatedBy
+//    @Column(name = "created_by")
+//    private String createdBy;
+//
+//    @LastModifiedBy
+//    @Column(name = "modified_by")
+//    private String modifiedBy;
 
     @CreationTimestamp
     @Column(name = "created_on")
