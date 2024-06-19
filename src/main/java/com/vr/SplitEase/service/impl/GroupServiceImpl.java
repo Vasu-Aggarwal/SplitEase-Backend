@@ -68,6 +68,7 @@ public class GroupServiceImpl implements GroupService {
             userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
             userGroupLedger.setTotalOwed(0.00);
             userGroupLedger.setTotalLent(0.00);
+            userGroupLedger.setNetBalance(0.00);
             userGroupLedgerRepository.save(userGroupLedger);
         }
         return modelMapper.map(group, AddGroupResponse.class);
