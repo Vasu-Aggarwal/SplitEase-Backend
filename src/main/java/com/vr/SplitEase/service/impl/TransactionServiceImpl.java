@@ -1,9 +1,12 @@
 package com.vr.SplitEase.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.SplitEase.config.constants.LedgerStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.response.AddTransactionResponse;
+import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -133,14 +136,16 @@ public class TransactionServiceImpl implements TransactionService {
 
             AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
 
-            Group group1 = groupRepository.findById(1).orElseThrow(() -> new ResourceNotFoundException("group not found"));
-            calculateDebt(group1);
             return addTransactionResponse;
     }
 
     @Override
     @Transactional
-    public void calculateDebt(Group group) {
+    public CalculatedDebtResponse calculateDebt(Integer groupId) {
+
+        //Find the Group
+        Group group = groupRepository.findById(groupId).orElseThrow(()-> new ResourceNotFoundException("Group not found"));
+
         //Create the creditor and debtor map
         List<UserGroupLedger> userGroupLedgerList = userGroupLedgerRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
@@ -148,21 +153,27 @@ public class TransactionServiceImpl implements TransactionService {
         Map<String, Double> debtors = new HashMap<>();
 
         for (UserGroupLedger userGroupLedger: userGroupLedgerList){
-            if (userGroupLedger.getNetBalance() > 0.0){
+            if (userGroupLedger.getNetBalance() < 0.0){
                 // User is a creditor
-                creditors.put(userGroupLedger.getUser().getUserUuid(), userGroupLedger.getNetBalance());
-            } else if (userGroupLedger.getNetBalance() < 0.0){
+                creditors.put(userGroupLedger.getUser().getUserUuid(), Math.abs(userGroupLedger.getNetBalance()));
+            } else if (userGroupLedger.getNetBalance() > 0.0){
                 // User is a debtor
                 debtors.put(userGroupLedger.getUser().getUserUuid(), Math.abs(userGroupLedger.getNetBalance())); // Use positive values for debtors for easier processing
             }
         }
-        calculateDebts(creditors, debtors, group);
+        return calculateDebts(creditors, debtors, group);
     }
 
     @Transactional
-    public void calculateDebts(Map<String, Double> creditorsMap, Map<String, Double> debtorsMap, Group group) {
+    public CalculatedDebtResponse calculateDebts(Map<String, Double> creditorsMap, Map<String, Double> debtorsMap, Group group) {
         // Sort debtors map by keys (user names) in ascending order
         TreeMap<String, Double> sortedDebtorsMap = new TreeMap<>(debtorsMap);
+        List<CalculatedDebtResponse.Creditor> creditorList = new ArrayList<>();
+        List<CalculatedDebtResponse.Debtor> debtorList = new ArrayList<>();
+
+        // Create a map to store the lending details for each creditor
+        Map<String, List<CalculatedDebtResponse.LentDetails>> creditorLendingMap = new HashMap<>();
+        Map<String, List<CalculatedDebtResponse.LentDetails>> debtorLendingMap = new HashMap<>();
 
         // Process transactions
         for (Map.Entry<String, Double> debtorEntry : sortedDebtorsMap.entrySet()) {
@@ -183,7 +194,22 @@ public class TransactionServiceImpl implements TransactionService {
                     userGroupLedger.setNetBalance(settlementAmount);
                     userGroupLedger.setTotalLent(0.0);
                     userGroupLedger.setTotalOwed(0.0);
-                    System.out.println(debtorUser.getName() + " pays " + settlementAmount + " to " + creditorUser.getName());
+
+                    // Add lending details for creditor
+                    creditorLendingMap.computeIfAbsent(creditorUser.getUserUuid(), k -> new ArrayList<>())
+                            .add(CalculatedDebtResponse.LentDetails.builder()
+                                    .uuid(debtorUser.getUserUuid())
+                                    .amount(settlementAmount)
+                                    .build());
+
+                    // Add lending details for debtor
+                    debtorLendingMap.computeIfAbsent(debtorUser.getUserUuid(), k -> new ArrayList<>())
+                            .add(CalculatedDebtResponse.LentDetails.builder()
+                                    .uuid(creditorUser.getUserUuid())
+                                    .amount(settlementAmount)
+                                    .build());
+
+                    System.out.println(debtorUser.getUserUuid() + " pays " + settlementAmount + " to " + creditorUser.getUserUuid());
 
                     // Update debtor's amount
                     debtorAmount -= settlementAmount;
@@ -195,5 +221,38 @@ public class TransactionServiceImpl implements TransactionService {
                 }
             }
         }
+        // Create Creditor list for response
+        for (Map.Entry<String, List<CalculatedDebtResponse.LentDetails>> entry : creditorLendingMap.entrySet()) {
+            double getsBackAmount = entry.getValue().stream().mapToDouble(CalculatedDebtResponse.LentDetails::getAmount).sum();
+            creditorList.add(CalculatedDebtResponse.Creditor.builder()
+                    .uuid(entry.getKey())
+                    .getsBack(getsBackAmount)
+                    .lentTo(entry.getValue())
+                    .build());
+        }
+
+        // Create Debtor list for response
+        for (Map.Entry<String, List<CalculatedDebtResponse.LentDetails>> entry : debtorLendingMap.entrySet()) {
+            debtorList.add(CalculatedDebtResponse.Debtor.builder()
+                    .uuid(entry.getKey())
+                    .lentFrom(entry.getValue())
+                    .build());
+        }
+
+        CalculatedDebtResponse calculatedDebtResponse = CalculatedDebtResponse.builder()
+                .creditorList(creditorList)
+                .debtorList(debtorList)
+                .build();
+
+        // Print JSON representation
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String json = mapper.writeValueAsString(calculatedDebtResponse);
+            log.info("Calculated Debt Response JSON:");
+            log.info(json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return calculatedDebtResponse;
     }
 }

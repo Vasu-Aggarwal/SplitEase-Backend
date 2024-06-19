@@ -100,6 +100,7 @@ public class GroupServiceImpl implements GroupService {
                 userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
                 userGroupLedger.setTotalLent(0.00);
                 userGroupLedger.setTotalOwed(0.00);
+                userGroupLedger.setNetBalance(0.00);
                 userGroupLedgerRepository.save(userGroupLedger);
             }
         } catch (Exception e){

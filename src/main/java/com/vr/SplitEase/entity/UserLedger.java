@@ -20,12 +20,12 @@ public class UserLedger extends Auditable{
     @Column(name = "ledger_id")
     private Integer ledgerId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_uuid")
     private User user;
 
     @JoinColumn(name = "transaction_id")
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Transaction transaction;
 
     @Column(name = "owed_or_lent", nullable = false)
@@ -33,7 +33,7 @@ public class UserLedger extends Auditable{
 
     private Double amount;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lent_from")
     private User lentFrom;
 

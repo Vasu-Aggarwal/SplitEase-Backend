@@ -21,11 +21,11 @@ public class UserGroupLedger{
     @Column(name = "user_group_ledger_id")
     private Integer userGroupLedgerId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_uuid")
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lentFrom")
     private User lentFrom;
 
@@ -33,7 +33,7 @@ public class UserGroupLedger{
     private Double netBalance;
 
     @JoinColumn(name = "group_id")
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Group group;
 
     @Column(name = "total_owed")

@@ -36,19 +36,19 @@ public class User extends Auditable implements UserDetails {
     @Column(name = "password")
     private String password;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserGroupLedger> userGroups = new HashSet<>();
 
-    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserGroupLedger> userGroupLentFrom = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserLedger> userLedger = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Transaction> transactions = new HashSet<>();
 
-    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserLedger> userLentFrom = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
