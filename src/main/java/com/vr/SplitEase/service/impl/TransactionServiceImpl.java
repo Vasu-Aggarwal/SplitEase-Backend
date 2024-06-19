@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.SplitEase.config.constants.LedgerStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
+import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
 import com.vr.SplitEase.dto.response.AddTransactionResponse;
 import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
+import com.vr.SplitEase.dto.response.SettleUpTransactionResponse;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -152,6 +154,67 @@ public class TransactionServiceImpl implements TransactionService {
         return calculateDebts(creditors, debtors, group);
     }
 
+    @Override
+    @Transactional
+    public SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest) {
+        //find the user who is paying in the transaction
+        User payer = userRepository.findById(settleUpTransactionRequest.getPayer()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        //find the user who is receiving in the transaction
+        User receiver = userRepository.findById(settleUpTransactionRequest.getReceiver()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        //find the group
+        Group group = groupRepository.findById(settleUpTransactionRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        Transaction transaction = modelMapper.map(settleUpTransactionRequest, Transaction.class);
+        transaction.setUser(payer);
+        transaction.setGroup(group);
+        transaction.setCategory(null);
+        transaction = transactionRepository.save(transaction);
+
+        UserLedger userLedger = new UserLedger();
+        UserGroupLedger userGroupLedger = new UserGroupLedger();
+
+        List<UserLedger> userLedgerList = new ArrayList<>();
+        userLedger.setTransaction(transaction);
+        userLedger.setUser(receiver);
+        userLedger.setLentFrom(payer);
+        userLedger.setIsActive(LedgerStatus.ACTIVE);
+        userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
+        userLedger.setAmount(settleUpTransactionRequest.getAmount());
+        userLedgerList.add(userLedger);
+        userLedger.setTransaction(transaction);
+        userLedger.setUser(payer);
+        userLedger.setLentFrom(null);
+        userLedger.setIsActive(LedgerStatus.ACTIVE);
+        userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
+        userLedger.setAmount(settleUpTransactionRequest.getAmount());
+        userLedgerList.add(userLedger);
+        userLedgerRepository.saveAll(userLedgerList);
+
+        List<UserGroupLedger> userGroupLedgerList = new ArrayList<>();
+        userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(receiver, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        Double totalOwedAmount = userGroupLedger.getTotalOwed();
+        Double netBalance = userGroupLedger.getNetBalance();
+        userGroupLedger.setTotalOwed(totalOwedAmount + settleUpTransactionRequest.getAmount());
+        userGroupLedger.setNetBalance(netBalance + settleUpTransactionRequest.getAmount());
+        userGroupLedgerList.add(userGroupLedger);
+
+        userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(payer, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        Double totalLentAmount = userGroupLedger.getTotalLent();
+        netBalance = userGroupLedger.getNetBalance();
+        userGroupLedger.setTotalLent(totalLentAmount + settleUpTransactionRequest.getAmount());
+        userGroupLedger.setNetBalance(netBalance - settleUpTransactionRequest.getAmount());
+
+        try {
+            userGroupLedgerRepository.saveAll(userGroupLedgerList);
+        } catch (StackOverflowError e) {
+            throw e;
+        }
+
+        return null;
+    }
+
     @Transactional
     public CalculatedDebtResponse calculateDebts(Map<String, Double> creditorsMap, Map<String, Double> debtorsMap, Group group) {
         // Sort debtors map by keys (user names) in ascending order
@@ -242,4 +305,5 @@ public class TransactionServiceImpl implements TransactionService {
         }
         return calculatedDebtResponse;
     }
+
 }
