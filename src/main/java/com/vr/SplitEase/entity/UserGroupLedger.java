@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -22,6 +24,13 @@ public class UserGroupLedger{
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_uuid")
     private User user;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "lentFrom")
+    private User lentFrom;
+
+    @Column(name = "net_balance")
+    private Double netBalance;
 
     @JoinColumn(name = "group_id")
     @ManyToOne(fetch = FetchType.EAGER)

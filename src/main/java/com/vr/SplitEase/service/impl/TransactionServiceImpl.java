@@ -14,8 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -80,22 +79,24 @@ public class TransactionServiceImpl implements TransactionService {
                     userLedger.setIsActive(LedgerStatus.ACTIVE);
                     userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
                     userLedger.setAmount(userAmount);
-                    log.info("Fetching user group ledger for user: {} and group: {}", involvedUser.getUserUuid(), group.getGroupId());
+//                    log.info("Fetching user group ledger for user: {} and group: {}", involvedUser.getUserUuid(), group.getGroupId());
 
                     //for each user update the user group ledger also
                     userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                     Double totalOwedAmount = userGroupLedger.getTotalOwed();
-                    log.info("Updating total lent amount from {} to {}", totalOwedAmount, totalOwedAmount+userAmount);
+                    Double netBalance = userGroupLedger.getNetBalance();
+//                    log.info("Updating total lent amount from {} to {}", totalOwedAmount, totalOwedAmount+userAmount);
                     userGroupLedger.setTotalOwed(totalOwedAmount + userAmount);
-                    log.info("Creating user group ledger");
+                    userGroupLedger.setNetBalance(netBalance + totalOwedAmount);
+//                    log.info("Creating user group ledger");
                     try {
                         userGroupLedgerRepository.save(userGroupLedger);
-                        log.info("User group ledger updated successfully");
+//                        log.info("User group ledger updated successfully");
                     } catch (StackOverflowError e) {
-                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+//                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
                         throw e;
                     }
-                    log.info("Created user group ledger");
+//                    log.info("Created user group ledger");
                 }
                 else {
                     userLedger.setTransaction(transaction);
@@ -108,27 +109,91 @@ public class TransactionServiceImpl implements TransactionService {
                     //Modify the totalLent amount in user ledger for the payer
                     userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                     Double totalLentAmount = userGroupLedger.getTotalLent();
+                    Double netBalance = userGroupLedger.getNetBalance();
                     userGroupLedger.setTotalLent(totalLentAmount + (addTransactionRequest.getAmount() - userAmount));
+                    userGroupLedger.setNetBalance(netBalance - (totalLentAmount + (addTransactionRequest.getAmount() - userAmount)));
                     try {
                         userGroupLedgerRepository.save(userGroupLedger);
-                        log.info("User group ledger updated successfully");
+//                        log.info("User group ledger updated successfully");
                     } catch (StackOverflowError e) {
-                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+//                        log.error("StackOverflowError while saving user group ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
                         throw e;
                     }
                 }
-                log.info("Creating user ledger");
+//                log.info("Creating user ledger");
                 try {
                     userLedgerRepository.save(userLedger);
-                    log.info("User  ledger updated successfully");
+//                    log.info("User  ledger updated successfully");
                 } catch (StackOverflowError e) {
-                    log.error("StackOverflowError while saving user  ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
+//                    log.error("StackOverflowError while saving user  ledger for user: {} and group: {}. Error: {}", involvedUser.getUserUuid(), group.getGroupId(), e.getMessage());
                     throw e;
                 }
-                log.info("Created user ledger");
+//                log.info("Created user ledger");
             }
 
             AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
+
+            Group group1 = groupRepository.findById(1).orElseThrow(() -> new ResourceNotFoundException("group not found"));
+            calculateDebt(group1);
             return addTransactionResponse;
+    }
+
+    @Override
+    @Transactional
+    public void calculateDebt(Group group) {
+        //Create the creditor and debtor map
+        List<UserGroupLedger> userGroupLedgerList = userGroupLedgerRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        Map<String, Double> creditors = new HashMap<>();
+        Map<String, Double> debtors = new HashMap<>();
+
+        for (UserGroupLedger userGroupLedger: userGroupLedgerList){
+            if (userGroupLedger.getNetBalance() > 0.0){
+                // User is a creditor
+                creditors.put(userGroupLedger.getUser().getUserUuid(), userGroupLedger.getNetBalance());
+            } else if (userGroupLedger.getNetBalance() < 0.0){
+                // User is a debtor
+                debtors.put(userGroupLedger.getUser().getUserUuid(), Math.abs(userGroupLedger.getNetBalance())); // Use positive values for debtors for easier processing
+            }
+        }
+        calculateDebts(creditors, debtors, group);
+    }
+
+    @Transactional
+    public void calculateDebts(Map<String, Double> creditorsMap, Map<String, Double> debtorsMap, Group group) {
+        // Sort debtors map by keys (user names) in ascending order
+        TreeMap<String, Double> sortedDebtorsMap = new TreeMap<>(debtorsMap);
+
+        // Process transactions
+        for (Map.Entry<String, Double> debtorEntry : sortedDebtorsMap.entrySet()) {
+//            String debtor = debtorEntry.getKey();
+            User debtorUser = userRepository.findById(debtorEntry.getKey()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            double debtorAmount = debtorEntry.getValue();
+
+            for (Map.Entry<String, Double> creditorEntry : creditorsMap.entrySet()) {
+                User creditorUser = userRepository.findById(creditorEntry.getKey()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+                double creditorAmount = creditorEntry.getValue();
+
+                if (debtorAmount > 0 && creditorAmount > 0) {
+                    double settlementAmount = Math.min(debtorAmount, creditorAmount);
+
+                    // Perform transaction from debtor to creditor
+                    UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(debtorUser, group).orElseThrow(() -> new ResourceNotFoundException("User Group Ledger does not exists"));
+                    userGroupLedger.setLentFrom(creditorUser);
+                    userGroupLedger.setNetBalance(settlementAmount);
+                    userGroupLedger.setTotalLent(0.0);
+                    userGroupLedger.setTotalOwed(0.0);
+                    System.out.println(debtorUser.getName() + " pays " + settlementAmount + " to " + creditorUser.getName());
+
+                    // Update debtor's amount
+                    debtorAmount -= settlementAmount;
+                    debtorsMap.put(debtorUser.getUserUuid(), debtorAmount);
+
+                    // Update creditor's amount
+                    creditorAmount -= settlementAmount;
+                    creditorsMap.put(creditorUser.getUserUuid(), creditorAmount);
+                }
+            }
+        }
     }
 }

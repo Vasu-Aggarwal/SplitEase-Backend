@@ -39,6 +39,9 @@ public class User extends Auditable implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<UserGroupLedger> userGroups = new HashSet<>();
 
+    @OneToMany(mappedBy = "lentFrom", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<UserGroupLedger> userGroupLentFrom = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<UserLedger> userLedger = new HashSet<>();
 

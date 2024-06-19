@@ -14,7 +14,7 @@ spring:
 #      max-request-size: 3MB
 
   jpa:
-    show-sql: true
+#    show-sql: true
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
