@@ -22,5 +22,5 @@ public class SettleUpTransactionRequest {
     @NotNull(message = "Amount cannot be null")
     private Double amount;
     @NotNull(message = "Group Id cannot be null")
-    private Integer groupId;
+    private Integer group;
 }

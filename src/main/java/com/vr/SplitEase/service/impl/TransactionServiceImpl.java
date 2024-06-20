@@ -177,7 +177,7 @@ public class TransactionServiceImpl implements TransactionService {
         User receiver = userRepository.findById(settleUpTransactionRequest.getReceiver()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //find the group
-        Group group = groupRepository.findById(settleUpTransactionRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        Group group = groupRepository.findById(settleUpTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         Transaction transaction = modelMapper.map(settleUpTransactionRequest, Transaction.class);
         transaction.setUser(payer);
@@ -238,10 +238,10 @@ public class TransactionServiceImpl implements TransactionService {
         settleUpTransactionResponse.setAmount(settleUpTransactionRequest.getAmount());
         settleUpTransactionResponse.setPayer(payer.getUserUuid());
         settleUpTransactionResponse.setReceiver(receiver.getUserUuid());
-        settleUpTransactionResponse.setGroupId(settleUpTransactionRequest.getGroupId());
+        settleUpTransactionResponse.setGroupId(settleUpTransactionRequest.getGroup());
         entityManager.flush();
         entityManager.clear();
-        transactionRepository.calculateNetBalance(settleUpTransactionRequest.getGroupId());
+        transactionRepository.calculateNetBalance(settleUpTransactionRequest.getGroup());
         return settleUpTransactionResponse;
     }
 
