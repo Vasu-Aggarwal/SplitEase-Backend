@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.SplitEase.config.constants.LedgerStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
+import com.vr.SplitEase.config.constants.SplitBy;
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
 import com.vr.SplitEase.dto.response.AddTransactionResponse;
@@ -57,6 +58,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setGroup(group);
         transaction.setCategory(category);
         transaction = transactionRepository.save(transaction);
+
         //check the total amount set to all the users must be equal to the transaction amount
         Double amount = 0.0;
         for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
@@ -66,6 +68,13 @@ public class TransactionServiceImpl implements TransactionService {
         //if amount is not equal then throw error
         if (!amount.equals(addTransactionRequest.getAmount())) {
             throw new BadApiRequestException("The sum of amount distributed should be equal to transaction amount");
+        }
+
+        Optional<Map.Entry<String, Double>> result = addTransactionRequest.getUsersInvolved().entrySet().stream()
+                .filter(entry -> entry.getKey().equals(user.getEmail())).findFirst();
+
+        if (result.isEmpty()){
+            throw new BadApiRequestException("Paying user must be included in the involved user list");
         }
 
         //Now add the split money to user ledger
@@ -170,41 +179,53 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setUser(payer);
         transaction.setGroup(group);
         transaction.setCategory(null);
+        transaction.setSplitBy(SplitBy.EQUAL);
         transaction = transactionRepository.save(transaction);
 
-        UserLedger userLedger = new UserLedger();
-        UserGroupLedger userGroupLedger = new UserGroupLedger();
+        UserLedger userLedgerPayer = new UserLedger();
+        UserLedger userLedgerReceiver = new UserLedger();
+        UserGroupLedger userGroupLedgerPayer = new UserGroupLedger();
+        UserGroupLedger userGroupLedgerReceiver = new UserGroupLedger();
 
         List<UserLedger> userLedgerList = new ArrayList<>();
-        userLedger.setTransaction(transaction);
-        userLedger.setUser(receiver);
-        userLedger.setLentFrom(payer);
-        userLedger.setIsActive(LedgerStatus.ACTIVE);
-        userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
-        userLedger.setAmount(settleUpTransactionRequest.getAmount());
-        userLedgerList.add(userLedger);
-        userLedger.setTransaction(transaction);
-        userLedger.setUser(payer);
-        userLedger.setLentFrom(null);
-        userLedger.setIsActive(LedgerStatus.ACTIVE);
-        userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
-        userLedger.setAmount(settleUpTransactionRequest.getAmount());
-        userLedgerList.add(userLedger);
+
+        //Set user ledger for the receiver
+        userLedgerReceiver.setTransaction(transaction);
+        userLedgerReceiver.setUser(receiver);
+        userLedgerReceiver.setLentFrom(payer);
+        userLedgerReceiver.setIsActive(LedgerStatus.ACTIVE);
+        userLedgerReceiver.setOwedOrLent(LentOwedStatus.OWED.toString());
+        userLedgerReceiver.setAmount(settleUpTransactionRequest.getAmount());
+
+        userLedgerList.add(userLedgerReceiver);
+
+        //Set user ledger for the payer
+        userLedgerPayer.setTransaction(transaction);
+        userLedgerPayer.setUser(payer);
+        userLedgerPayer.setLentFrom(null);
+        userLedgerPayer.setIsActive(LedgerStatus.ACTIVE);
+        userLedgerPayer.setOwedOrLent(LentOwedStatus.LENT.toString());
+        userLedgerPayer.setAmount(settleUpTransactionRequest.getAmount());
+        userLedgerList.add(userLedgerPayer);
+
         userLedgerRepository.saveAll(userLedgerList);
 
         List<UserGroupLedger> userGroupLedgerList = new ArrayList<>();
-        userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(receiver, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        Double totalOwedAmount = userGroupLedger.getTotalOwed();
-        Double netBalance = userGroupLedger.getNetBalance();
-        userGroupLedger.setTotalOwed(totalOwedAmount + settleUpTransactionRequest.getAmount());
-        userGroupLedger.setNetBalance(netBalance + settleUpTransactionRequest.getAmount());
-        userGroupLedgerList.add(userGroupLedger);
+        //Set user group ledger for the receiver
+        userGroupLedgerReceiver = userGroupLedgerRepository.findByUserAndGroup(receiver, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        Double totalOwedAmount = userGroupLedgerReceiver.getTotalOwed();
+        Double netBalance = userGroupLedgerReceiver.getNetBalance();
+        userGroupLedgerReceiver.setTotalOwed(totalOwedAmount + settleUpTransactionRequest.getAmount());
+        userGroupLedgerReceiver.setNetBalance(netBalance + settleUpTransactionRequest.getAmount());
+        userGroupLedgerList.add(userGroupLedgerReceiver);
 
-        userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(payer, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        Double totalLentAmount = userGroupLedger.getTotalLent();
-        netBalance = userGroupLedger.getNetBalance();
-        userGroupLedger.setTotalLent(totalLentAmount + settleUpTransactionRequest.getAmount());
-        userGroupLedger.setNetBalance(netBalance - settleUpTransactionRequest.getAmount());
+        //Set user group ledger for the payer
+        userGroupLedgerPayer = userGroupLedgerRepository.findByUserAndGroup(payer, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        Double totalLentAmount = userGroupLedgerPayer.getTotalLent();
+        netBalance = userGroupLedgerPayer.getNetBalance();
+        userGroupLedgerPayer.setTotalLent(totalLentAmount + settleUpTransactionRequest.getAmount());
+        userGroupLedgerPayer.setNetBalance(netBalance - settleUpTransactionRequest.getAmount());
+        userGroupLedgerList.add(userGroupLedgerPayer);
 
         try {
             userGroupLedgerRepository.saveAll(userGroupLedgerList);
@@ -212,7 +233,21 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         }
 
-        return null;
+        SettleUpTransactionResponse settleUpTransactionResponse = new SettleUpTransactionResponse();
+        settleUpTransactionResponse.setTransactionId(transaction.getTransactionId());
+        settleUpTransactionResponse.setAmount(settleUpTransactionRequest.getAmount());
+        settleUpTransactionResponse.setPayer(payer.getUserUuid());
+        settleUpTransactionResponse.setReceiver(receiver.getUserUuid());
+        settleUpTransactionResponse.setGroupId(settleUpTransactionRequest.getGroupId());
+
+        return settleUpTransactionResponse;
+    }
+
+    @Override
+    @Transactional
+    public void deleteTransaction(Integer transactionId) {
+        //delete the transaction
+        Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
     }
 
     @Transactional

@@ -11,4 +11,5 @@ public interface TransactionService {
     AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest);
     CalculatedDebtResponse calculateDebt(Integer groupId);
     SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest);
+    void deleteTransaction(Integer transactionId);
 }
