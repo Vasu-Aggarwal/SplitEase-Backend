@@ -9,12 +9,15 @@ import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
 import com.vr.SplitEase.dto.response.AddTransactionResponse;
 import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
+import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.dto.response.SettleUpTransactionResponse;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.*;
 import com.vr.SplitEase.service.TransactionService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,9 @@ import java.util.*;
 @Service
 @Slf4j
 public class TransactionServiceImpl implements TransactionService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final ModelMapper modelMapper;
     private final TransactionRepository transactionRepository;
@@ -97,9 +103,7 @@ public class TransactionServiceImpl implements TransactionService {
                 //for each user update the user group ledger also
                 userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                 Double totalOwedAmount = userGroupLedger.getTotalOwed();
-                Double netBalance = userGroupLedger.getNetBalance();
                 userGroupLedger.setTotalOwed(totalOwedAmount + userAmount);
-                userGroupLedger.setNetBalance(netBalance + userAmount);
                 try {
                     userGroupLedgerRepository.save(userGroupLedger);
                 } catch (StackOverflowError e) {
@@ -117,9 +121,7 @@ public class TransactionServiceImpl implements TransactionService {
                 //Modify the totalLent amount in user ledger for the payer
                 userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                 Double totalLentAmount = userGroupLedger.getTotalLent();
-                Double netBalance = userGroupLedger.getNetBalance();
                 userGroupLedger.setTotalLent(totalLentAmount + (addTransactionRequest.getAmount() - userAmount));
-                userGroupLedger.setNetBalance(netBalance - (addTransactionRequest.getAmount() - userAmount));
                 try {
                     userGroupLedgerRepository.save(userGroupLedger);
                 } catch (StackOverflowError e) {
@@ -132,9 +134,11 @@ public class TransactionServiceImpl implements TransactionService {
                 throw e;
             }
         }
-
+        // Ensure transaction is committed before calling stored procedure
+        entityManager.flush();
+        entityManager.clear();
+        transactionRepository.calculateNetBalance(addTransactionRequest.getGroup()); //set the net balance from the stored procedure
         AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
-
         return addTransactionResponse;
     }
 
@@ -214,17 +218,13 @@ public class TransactionServiceImpl implements TransactionService {
         //Set user group ledger for the receiver
         userGroupLedgerReceiver = userGroupLedgerRepository.findByUserAndGroup(receiver, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         Double totalOwedAmount = userGroupLedgerReceiver.getTotalOwed();
-        Double netBalance = userGroupLedgerReceiver.getNetBalance();
         userGroupLedgerReceiver.setTotalOwed(totalOwedAmount + settleUpTransactionRequest.getAmount());
-        userGroupLedgerReceiver.setNetBalance(netBalance + settleUpTransactionRequest.getAmount());
         userGroupLedgerList.add(userGroupLedgerReceiver);
 
         //Set user group ledger for the payer
         userGroupLedgerPayer = userGroupLedgerRepository.findByUserAndGroup(payer, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         Double totalLentAmount = userGroupLedgerPayer.getTotalLent();
-        netBalance = userGroupLedgerPayer.getNetBalance();
         userGroupLedgerPayer.setTotalLent(totalLentAmount + settleUpTransactionRequest.getAmount());
-        userGroupLedgerPayer.setNetBalance(netBalance - settleUpTransactionRequest.getAmount());
         userGroupLedgerList.add(userGroupLedgerPayer);
 
         try {
@@ -239,15 +239,40 @@ public class TransactionServiceImpl implements TransactionService {
         settleUpTransactionResponse.setPayer(payer.getUserUuid());
         settleUpTransactionResponse.setReceiver(receiver.getUserUuid());
         settleUpTransactionResponse.setGroupId(settleUpTransactionRequest.getGroupId());
-
+        entityManager.flush();
+        entityManager.clear();
+        transactionRepository.calculateNetBalance(settleUpTransactionRequest.getGroupId());
         return settleUpTransactionResponse;
     }
 
     @Override
     @Transactional
-    public void deleteTransaction(Integer transactionId) {
-        //delete the transaction
+    public DeleteResponse deleteTransaction(Integer transactionId) {
+        //find the transaction
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+        User user = transaction.getUser();
+        Group group = transaction.getGroup();
+
+        //Update the user group ledger for each user
+        for (UserLedger userLedger: transaction.getUserLedger()){
+            User involvedUser = userLedger.getUser();
+            Double userAmount = userLedger.getAmount();
+            UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
+
+            if (!involvedUser.getUserUuid().equals(user.getUserUuid())){
+                userGroupLedger.setTotalOwed(userGroupLedger.getTotalOwed() - userAmount);
+            } else {
+                userGroupLedger.setTotalLent(userGroupLedger.getTotalLent() - userAmount);
+            }
+            userGroupLedgerRepository.save(userGroupLedger);
+            userLedgerRepository.delete(userLedger);
+        }
+        entityManager.flush();
+        entityManager.clear();
+        transactionRepository.calculateNetBalance(group.getGroupId());
+        transactionRepository.delete(transaction);
+        return DeleteResponse.builder().message("Transaction deleted successfully").build();
     }
 
     @Transactional
