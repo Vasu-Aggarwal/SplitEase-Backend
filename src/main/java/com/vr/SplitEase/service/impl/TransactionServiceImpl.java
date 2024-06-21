@@ -19,10 +19,7 @@ import com.vr.SplitEase.service.TransactionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -386,6 +383,12 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             Sheet sheet = workbook.createSheet("Transactions");
 
+            // Create a cell style for date format
+            CellStyle dateCellStyle = workbook.createCellStyle();
+            CreationHelper createHelper = workbook.getCreationHelper();
+            dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MM-yyyy"));
+
+
             // Create header row
             Row headerRow = sheet.createRow(0);
             String[] headers = {"Date", "Description", "Category", "Amount"};
@@ -416,7 +419,9 @@ public class TransactionServiceImpl implements TransactionService {
             int rowIdx = 1;
             for (Transaction transaction : transactions) {
                 Row row = sheet.createRow(rowIdx++);
-                row.createCell(0).setCellValue(transaction.getCreatedOn());
+                Cell dateCell = row.createCell(0);
+                dateCell.setCellValue(transaction.getCreatedOn());
+                dateCell.setCellStyle(dateCellStyle);
                 row.createCell(1).setCellValue(transaction.getDescription());
                 row.createCell(2).setCellValue(transaction.getCategory().getName());
                 row.createCell(3).setCellValue(transaction.getAmount());
@@ -438,8 +443,8 @@ public class TransactionServiceImpl implements TransactionService {
             }
 
             // Add total net balance row at the end
-            Row totalNetBalanceRow = sheet.createRow(rowIdx);
-            totalNetBalanceRow.createCell(0).setCellValue("Total Net Balance");
+            Row totalNetBalanceRow = sheet.createRow(++rowIdx);
+            totalNetBalanceRow.createCell(0).setCellValue("Total Balance");
 
             // Fetch and set net balance for each user involved in the transaction
             List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByGroup(group)
@@ -447,9 +452,13 @@ public class TransactionServiceImpl implements TransactionService {
 
 
             cellIdx = 4;
-            for (UserGroupLedger userGroupLedger : userGroupLedgers) {
+            for (User user : users) {
+                double netBalance = userGroupLedgers.stream()
+                        .filter(ledger -> ledger.getUser().equals(user))
+                        .mapToDouble(UserGroupLedger::getNetBalance)
+                        .sum();
+
                 Cell cell = totalNetBalanceRow.createCell(cellIdx++);
-                double netBalance = userGroupLedger.getNetBalance();
                 cell.setCellValue(netBalance);
             }
 
