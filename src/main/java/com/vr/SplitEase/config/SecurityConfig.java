@@ -47,6 +47,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize ->  authorize
+                    .requestMatchers("api/transaction/**").permitAll()
                     .requestMatchers("api/**").authenticated()
                     .requestMatchers("auth/**").permitAll()
 //                            .requestMatchers("api/user/**").hasRole("ADMIN")

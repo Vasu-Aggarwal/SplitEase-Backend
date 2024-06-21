@@ -19,10 +19,18 @@ import com.vr.SplitEase.service.TransactionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -364,6 +372,95 @@ public class TransactionServiceImpl implements TransactionService {
             e.printStackTrace();
         }
         return calculatedDebtResponse;
+    }
+
+    @Override
+    public ByteArrayInputStream generateExcelForGroupTransactions(Integer groupId) throws IOException {
+        //Find the group
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        //Find all transactions of a particular group
+        List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        Workbook workbook = new XSSFWorkbook();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Sheet sheet = workbook.createSheet("Transactions");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"Date", "Description", "Category", "Amount"};
+            int cellIdx = 0;
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(cellIdx++);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Add user names to header row dynamically
+            List<User> users = new ArrayList<>();
+            for (Transaction transaction : transactions) {
+                List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
+                for (UserLedger userLedger : userLedgerList) {
+                    User user = userLedger.getUser();
+                    if (!users.contains(user)) {
+                        users.add(user);
+                    }
+                }
+            }
+
+            for (User user : users) {
+                Cell cell = headerRow.createCell(cellIdx++);
+                cell.setCellValue(user.getName());
+            }
+
+            // Populate data rows
+            int rowIdx = 1;
+            for (Transaction transaction : transactions) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(transaction.getCreatedOn());
+                row.createCell(1).setCellValue(transaction.getDescription());
+                row.createCell(2).setCellValue(transaction.getCategory().getName());
+                row.createCell(3).setCellValue(transaction.getAmount());
+
+                // Populate user amounts in the row
+                cellIdx = 4; // Starting cell for user amounts
+                for (User user : users) {
+                    double amount = userLedgerRepository.findByTransactionAndUser(transaction, user)
+                            .map(userLedger -> {
+                                double ledgerAmount = userLedger.getAmount();
+                                if (userLedger.getOwedOrLent().equals(LentOwedStatus.LENT.toString())) {
+                                    ledgerAmount = -ledgerAmount; // Prefix with '-' if user has lent money
+                                }
+                                return ledgerAmount;
+                            })
+                            .orElse(0.0);
+                    row.createCell(cellIdx++).setCellValue(amount);
+                }
+            }
+
+            // Add total net balance row at the end
+            Row totalNetBalanceRow = sheet.createRow(rowIdx);
+            totalNetBalanceRow.createCell(0).setCellValue("Total Net Balance");
+
+            // Fetch and set net balance for each user involved in the transaction
+            List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByGroup(group)
+                    .orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
+
+
+            cellIdx = 4;
+            for (UserGroupLedger userGroupLedger : userGroupLedgers) {
+                Cell cell = totalNetBalanceRow.createCell(cellIdx++);
+                double netBalance = userGroupLedger.getNetBalance();
+                cell.setCellValue(netBalance);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (Exception e) {
+            throw new BadApiRequestException(e.getMessage());
+        } finally {
+            workbook.close();
+            out.close();
+        }
     }
 
 }
