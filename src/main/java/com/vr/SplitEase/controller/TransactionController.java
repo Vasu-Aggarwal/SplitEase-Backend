@@ -53,18 +53,4 @@ public class TransactionController {
         DeleteResponse deleteResponse = transactionService.deleteTransaction(transactionId);
         return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
     }
-
-    @GetMapping("/export/{groupId}")
-    public ResponseEntity<InputStreamResource> exportExcel(@PathVariable Integer groupId) throws IOException {
-        ByteArrayInputStream in = transactionService.generateExcelForGroupTransactions(groupId);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment; filename=transactions.xlsx");
-
-        return ResponseEntity
-                .ok()
-                .headers(headers)
-                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
-                .body(new InputStreamResource(in));
-    }
 }

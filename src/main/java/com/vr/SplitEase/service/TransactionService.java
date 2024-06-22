@@ -16,5 +16,4 @@ public interface TransactionService {
     CalculatedDebtResponse calculateDebt(Integer groupId);
     SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest);
     DeleteResponse deleteTransaction(Integer transactionId);
-    ByteArrayInputStream generateExcelForGroupTransactions(Integer groupId) throws IOException;
 }
