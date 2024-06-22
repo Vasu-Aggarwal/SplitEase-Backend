@@ -6,8 +6,10 @@ import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
+import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
+import com.vr.SplitEase.exception.CannotRemoveUserFromGroupException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.*;
 import com.vr.SplitEase.service.GroupService;
@@ -216,5 +218,28 @@ public class GroupServiceImpl implements GroupService {
             workbook.close();
             out.close();
         }
+    }
+
+    @Override
+    public DeleteResponse removeUserFromGroup(Integer groupId, String userUuid) {
+
+        //Get the user
+        User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        //Get the group
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        //check if user exists in the group or not
+        UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("No user found in the group"));
+
+        //remove the user only if his net balance is 0
+        if (userGroupLedger.getNetBalance() == 0.0){
+            userGroupLedgerRepository.delete(userGroupLedger);
+        } else {
+            //When the net balance is not 0 then don't delete the user from the group
+            throw new CannotRemoveUserFromGroupException("Net balance must be 0", 0, userGroupLedger.getNetBalance());
+        }
+
+        return DeleteResponse.builder().message("User removed from the group").build();
     }
 }

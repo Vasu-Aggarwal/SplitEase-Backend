@@ -10,6 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -58,6 +61,18 @@ public class GlobalExceptionHandler {
         String message = ex.getMessage();
         BadApiResponse badApiResponse = new BadApiResponse(message, 0);
         return new ResponseEntity<>(badApiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(CannotRemoveUserFromGroupException.class)
+    public ResponseEntity<Map<String, Object>> cannotRemoveUserFromGroup(CannotRemoveUserFromGroupException cannotRemoveUserFromGroupException){
+        String message = cannotRemoveUserFromGroupException.message;
+        Integer status = cannotRemoveUserFromGroupException.status;
+        Double netBal = cannotRemoveUserFromGroupException.netBalance;
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", message);
+        response.put("status", status);
+        response.put("netBalance", netBal);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
 }

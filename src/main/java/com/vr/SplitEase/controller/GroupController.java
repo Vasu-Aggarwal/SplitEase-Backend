@@ -4,6 +4,7 @@ import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
+import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.service.GroupService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,5 +48,11 @@ public class GroupController {
                 .headers(headers)
                 .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
                 .body(new InputStreamResource(in));
+    }
+
+    @PostMapping("/removeUserFromGroup/{groupId}/{userUuid}")
+    public ResponseEntity<DeleteResponse> removeUserFromGroup(@PathVariable Integer groupId, @PathVariable String userUuid){
+        DeleteResponse deleteResponse = groupService.removeUserFromGroup(groupId, userUuid);
+        return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
     }
 }
