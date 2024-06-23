@@ -4,10 +4,8 @@ import com.vr.SplitEase.dto.request.EmailTask;
 import com.vr.SplitEase.service.EmailService;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.*;
 
