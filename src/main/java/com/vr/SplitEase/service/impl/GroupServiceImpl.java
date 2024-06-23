@@ -1,5 +1,6 @@
 package com.vr.SplitEase.service.impl;
 
+import com.vr.SplitEase.config.EmailScheduler;
 import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.dto.request.AddGroupRequest;
@@ -40,8 +41,9 @@ public class GroupServiceImpl implements GroupService {
     private final TransactionRepository transactionRepository;
     private final UserLedgerRepository userLedgerRepository;
     private final EmailService emailService;
+    private final EmailScheduler emailScheduler;
 
-    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository, EmailService emailService) {
+    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository, EmailService emailService, EmailScheduler emailScheduler) {
         this.modelMapper = modelMapper;
         this.groupRepository = groupRepository;
         this.userGroupLedgerRepository = userGroupLedgerRepository;
@@ -50,6 +52,7 @@ public class GroupServiceImpl implements GroupService {
         this.transactionRepository = transactionRepository;
         this.userLedgerRepository = userLedgerRepository;
         this.emailService = emailService;
+        this.emailScheduler = emailScheduler;
     }
 
 
@@ -121,7 +124,8 @@ public class GroupServiceImpl implements GroupService {
                 template.put("senderName", sender.getName());
                 template.put("senderEmail", sender.getEmail());
                 template.put("groupName", group.getName());
-                emailService.sendEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
+                emailScheduler.scheduleEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
+//                emailService.sendEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
             }
         } catch (Exception e){
             throw new BadApiRequestException(e.getMessage());
