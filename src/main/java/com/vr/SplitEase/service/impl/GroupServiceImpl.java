@@ -125,7 +125,6 @@ public class GroupServiceImpl implements GroupService {
                 template.put("senderEmail", sender.getEmail());
                 template.put("groupName", group.getName());
                 emailScheduler.scheduleEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
-//                emailService.sendEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
             }
         } catch (Exception e){
             throw new BadApiRequestException(e.getMessage());
