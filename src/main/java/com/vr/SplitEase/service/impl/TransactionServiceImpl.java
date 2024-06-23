@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -278,6 +279,21 @@ public class TransactionServiceImpl implements TransactionService {
         transactionRepository.calculateNetBalance(group.getGroupId());
         transactionRepository.delete(transaction);
         return DeleteResponse.builder().message("Transaction deleted successfully").build();
+    }
+
+    @Override
+    public AddTransactionResponse getTransactionById(Integer transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
+        return addTransactionResponse;
+    }
+
+    @Override
+    public List<AddTransactionResponse> getTransactionsByGroupId(Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<AddTransactionResponse> transactionResponses = transactions.stream().map(transaction -> modelMapper.map(transaction, AddTransactionResponse.class)).toList();
+        return transactionResponses;
     }
 
     @Transactional

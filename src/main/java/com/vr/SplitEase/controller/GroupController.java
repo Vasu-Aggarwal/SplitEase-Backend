@@ -4,6 +4,7 @@ import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
+import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.service.GroupService;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Set;
 
 @RestController
 @RequestMapping("api/group")
@@ -54,5 +56,11 @@ public class GroupController {
     public ResponseEntity<DeleteResponse> removeUserFromGroup(@PathVariable Integer groupId, @PathVariable String userUuid){
         DeleteResponse deleteResponse = groupService.removeUserFromGroup(groupId, userUuid);
         return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/getGroupMembers/{groupId}")
+    public ResponseEntity<Set<CreateUserResponse>> getGroupMembers(@PathVariable Integer groupId){
+        Set<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
+        return new ResponseEntity<>(createUserResponses, HttpStatus.OK);
     }
 }

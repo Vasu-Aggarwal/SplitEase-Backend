@@ -6,6 +6,7 @@ import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
+import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.DeleteResponse;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
@@ -241,5 +242,14 @@ public class GroupServiceImpl implements GroupService {
         }
 
         return DeleteResponse.builder().message("User removed from the group").build();
+    }
+
+    @Override
+    public Set<CreateUserResponse> getGroupMembers(Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        Set<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
+                modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
+                ).collect(Collectors.toSet());
+        return userList;
     }
 }

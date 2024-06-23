@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/transaction")
@@ -52,5 +53,17 @@ public class TransactionController {
     public ResponseEntity<DeleteResponse> deleteTransaction(@PathVariable Integer transactionId){
         DeleteResponse deleteResponse = transactionService.deleteTransaction(transactionId);
         return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/getTransactionById/{transactionId}")
+    public ResponseEntity<AddTransactionResponse> getTransactionById(@PathVariable Integer transactionId){
+        AddTransactionResponse addTransactionResponse = transactionService.getTransactionById(transactionId);
+        return new ResponseEntity<>(addTransactionResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/getTransactionsByGroup/{groupId}")
+    public ResponseEntity<List<AddTransactionResponse>> getTransactionsByGroup(@PathVariable Integer groupId){
+        List<AddTransactionResponse> addTransactionResponses = transactionService.getTransactionsByGroupId(groupId);
+        return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
     }
 }
