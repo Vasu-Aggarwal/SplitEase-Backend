@@ -73,6 +73,7 @@ public class GroupServiceImpl implements GroupService {
             group = modelMapper.map(addGroupRequest, Group.class);
             group.setStatus(GroupStatus.ACTIVE.getStatus());
             group.setTotalAmount(0.0);
+            group.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
             groupRepository.save(group);
             //Add the user (who is creating the group) to the group
             UserGroupLedger userGroupLedger = new UserGroupLedger();
@@ -90,7 +91,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public AddUserToGroupResponse addUsersToGroup(AddUserToGroupRequest addUserToGroupRequest) throws MessagingException {
-        User sender = userRepository.findById(addUserToGroupRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("Sender user not found"));
+        User sender = currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Sender user not found"));
 
         Set<User> users = addUserToGroupRequest.getUserList().stream().map(userEmail ->
                 userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException(String.format("User with email: %s not found", userEmail))))

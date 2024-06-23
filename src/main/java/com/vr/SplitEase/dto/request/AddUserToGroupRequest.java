@@ -17,10 +17,6 @@ import java.util.Set;
 @Setter
 public class AddUserToGroupRequest {
 
-    @NotNull(message = "User uuid cannot be null")
-    @NotBlank(message = "User uuid cannot be Empty")
-    private String userUuid;
-
     @Size(min = 1)
     private Set<String> userList = new HashSet<>();
 
