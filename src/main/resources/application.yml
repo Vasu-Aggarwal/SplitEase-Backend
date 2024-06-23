@@ -7,6 +7,19 @@ spring:
   application:
     name: "SplitEase"
 
+  #    EMAIL CONFIGURATION
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: split.ease01@gmail.com
+    password: knodvyhzpqgihrpn
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   #    File Configuration
 #  servlet:
 #    multipart:
