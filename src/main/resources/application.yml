@@ -13,7 +13,6 @@ spring:
     port: 587
     username: split.ease01@gmail.com
     password: ${SPLITEASE_SMTP_PASSWORD}
-#    password: knodvyhzpqgihrpn
     properties:
       mail:
         smtp:
