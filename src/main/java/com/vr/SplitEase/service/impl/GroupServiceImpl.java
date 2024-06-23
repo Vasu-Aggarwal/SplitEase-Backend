@@ -13,7 +13,9 @@ import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.CannotRemoveUserFromGroupException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.*;
+import com.vr.SplitEase.service.EmailService;
 import com.vr.SplitEase.service.GroupService;
+import jakarta.mail.MessagingException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hibernate.exception.ConstraintViolationException;
@@ -24,10 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,8 +39,9 @@ public class GroupServiceImpl implements GroupService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final UserLedgerRepository userLedgerRepository;
+    private final EmailService emailService;
 
-    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository) {
+    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository, EmailService emailService) {
         this.modelMapper = modelMapper;
         this.groupRepository = groupRepository;
         this.userGroupLedgerRepository = userGroupLedgerRepository;
@@ -49,6 +49,7 @@ public class GroupServiceImpl implements GroupService {
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
         this.userLedgerRepository = userLedgerRepository;
+        this.emailService = emailService;
     }
 
 
@@ -85,7 +86,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public AddUserToGroupResponse addUsersToGroup(AddUserToGroupRequest addUserToGroupRequest) {
+    public AddUserToGroupResponse addUsersToGroup(AddUserToGroupRequest addUserToGroupRequest) throws MessagingException {
+        User sender = userRepository.findById(addUserToGroupRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("Sender user not found"));
+
         Set<User> users = addUserToGroupRequest.getUserList().stream().map(userEmail ->
                 userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException(String.format("User with email: %s not found", userEmail))))
                 .collect(Collectors.toSet());
@@ -112,6 +115,13 @@ public class GroupServiceImpl implements GroupService {
                 userGroupLedger.setTotalOwed(0.00);
                 userGroupLedger.setNetBalance(0.00);
                 userGroupLedgerRepository.save(userGroupLedger);
+                //send the email to the user
+                Map<String, Object> template = new HashMap<>();
+                template.put("recipientName", user.getName());
+                template.put("senderName", sender.getName());
+                template.put("senderEmail", sender.getEmail());
+                template.put("groupName", group.getName());
+                emailService.sendEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
             }
         } catch (Exception e){
             throw new BadApiRequestException(e.getMessage());

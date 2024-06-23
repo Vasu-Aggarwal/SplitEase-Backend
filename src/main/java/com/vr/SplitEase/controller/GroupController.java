@@ -6,7 +6,9 @@ import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.DeleteResponse;
+import com.vr.SplitEase.service.EmailService;
 import com.vr.SplitEase.service.GroupService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -33,7 +35,7 @@ public class GroupController {
     }
 
     @PostMapping("/addUsersToGroup")
-    public ResponseEntity<AddUserToGroupResponse> addUserToGroup(@RequestBody @Valid AddUserToGroupRequest addUserToGroupRequest){
+    public ResponseEntity<AddUserToGroupResponse> addUserToGroup(@RequestBody @Valid AddUserToGroupRequest addUserToGroupRequest) throws MessagingException {
         AddUserToGroupResponse addUserToGroupResponse = groupService.addUsersToGroup(addUserToGroupRequest);
         return new ResponseEntity<>(addUserToGroupResponse, HttpStatus.OK);
     }
