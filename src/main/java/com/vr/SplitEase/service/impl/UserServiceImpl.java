@@ -2,32 +2,48 @@ package com.vr.SplitEase.service.impl;
 
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
+import com.vr.SplitEase.dto.response.AddGroupResponse;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
+import com.vr.SplitEase.dto.response.FriendsListResponse;
+import com.vr.SplitEase.dto.response.GetTotalNetBalance;
+import com.vr.SplitEase.entity.Group;
 import com.vr.SplitEase.entity.Role;
 import com.vr.SplitEase.entity.User;
+import com.vr.SplitEase.entity.UserGroupLedger;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.RoleRepository;
+import com.vr.SplitEase.repository.UserGroupLedgerRepository;
 import com.vr.SplitEase.repository.UserRepository;
+import com.vr.SplitEase.service.GroupService;
 import com.vr.SplitEase.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final UserGroupLedgerRepository userGroupLedgerRepository;
 
-    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserGroupLedgerRepository userGroupLedgerRepository) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.userGroupLedgerRepository = userGroupLedgerRepository;
     }
 
     @Override
@@ -82,5 +98,42 @@ public class UserServiceImpl implements UserService {
 
         CreateUserResponse createUserResponse = modelMapper.map(user, CreateUserResponse.class);
         return createUserResponse;
+    }
+
+    @Override
+    public GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid) {
+        //find the user by uuid
+        User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Double totalNetBalance = user.getUserGroups().stream().mapToDouble(UserGroupLedger::getNetBalance).sum();
+        return GetTotalNetBalance.builder().netBalance(totalNetBalance).build();
+    }
+
+    @Override
+    public List<FriendsListResponse> userFriendsList(String userUuid) {
+        //Find the user by uuid
+        User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+
+        //Get the list of groups the user is part of
+        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+
+        List<Group> groups = userGroupLedgers.stream().map(UserGroupLedger::getGroup).toList();
+
+        List<CreateUserResponse> userResponseList = new ArrayList<>();
+
+        groups.stream().map(group ->
+            group.getUserGroups().stream().map(userGroupLedger ->
+                    userResponseList.add(modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class))
+            )
+        );
+        log.info("USERS FRIENDS ARE: "+userResponseList);
+
+        Set<CreateUserResponse> userList = groups.get(0).getUserGroups().stream().map(userGroupLedger ->
+                modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
+        ).collect(Collectors.toSet());
+
+        //find all the users which are part of the groups where logged-in user is added
+
+        return null;
     }
 }

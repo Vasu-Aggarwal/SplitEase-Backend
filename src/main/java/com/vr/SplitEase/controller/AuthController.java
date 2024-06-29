@@ -13,6 +13,8 @@ import com.vr.SplitEase.repository.UserRepository;
 import com.vr.SplitEase.security.JwtHelper;
 import com.vr.SplitEase.service.RefreshTokenService;
 import com.vr.SplitEase.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +23,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,6 +80,15 @@ public class AuthController {
     public ResponseEntity<CreateUserResponse> registerNewUser(@RequestBody @Valid CreateUserRequest userRegisterRequest) {
         CreateUserResponse user = this.userService.addUpdateUser(userRegisterRequest);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        if (authentication != null) {
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+//            refreshTokenService.deleteByUserName(authentication.getName());
+        }
+        return ResponseEntity.ok("Logout successful");
     }
 
 //    @PostMapping("/registerAdminUser")
