@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -64,5 +65,11 @@ public class GroupController {
     public ResponseEntity<Set<CreateUserResponse>> getGroupMembers(@PathVariable Integer groupId){
         Set<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
         return new ResponseEntity<>(createUserResponses, HttpStatus.OK);
+    }
+
+    @GetMapping("/getGroupsByUser/{userUuid}")
+    public ResponseEntity<List<AddGroupResponse>> getGroupsByUser(@PathVariable String userUuid){
+        List<AddGroupResponse> addGroupResponses = groupService.getGroupsByUserUuid(userUuid);
+        return new ResponseEntity<>(addGroupResponses, HttpStatus.OK);
     }
 }

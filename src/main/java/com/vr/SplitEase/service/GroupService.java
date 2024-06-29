@@ -10,6 +10,7 @@ import jakarta.mail.MessagingException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 public interface GroupService {
@@ -18,4 +19,5 @@ public interface GroupService {
     ByteArrayInputStream generateExcelForGroupTransactions(Integer groupId) throws IOException;
     DeleteResponse removeUserFromGroup(Integer groupId, String userUuid);
     Set<CreateUserResponse> getGroupMembers(Integer groupId);
+    List<AddGroupResponse> getGroupsByUserUuid(String userUuid);
 }
