@@ -2,10 +2,7 @@ package com.vr.SplitEase.controller;
 
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
-import com.vr.SplitEase.dto.response.AddTransactionResponse;
-import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
-import com.vr.SplitEase.dto.response.SettleUpTransactionResponse;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -62,8 +59,8 @@ public class TransactionController {
     }
 
     @GetMapping("/getTransactionsByGroup/{groupId}")
-    public ResponseEntity<List<AddTransactionResponse>> getTransactionsByGroup(@PathVariable Integer groupId){
-        List<AddTransactionResponse> addTransactionResponses = transactionService.getTransactionsByGroupId(groupId);
+    public ResponseEntity<List<GetTransactionByGroupResponse>> getTransactionsByGroup(@PathVariable Integer groupId){
+        List<GetTransactionByGroupResponse> addTransactionResponses = transactionService.getTransactionsByGroupId(groupId);
         return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
     }
 }

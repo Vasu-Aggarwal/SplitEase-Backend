@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize ->  authorize
                     .requestMatchers("api/transaction/**").permitAll()
+                    .requestMatchers("api/group/export/**").permitAll()
                     .requestMatchers("api/**").authenticated()
                     .requestMatchers("auth/**").permitAll()
 //                            .requestMatchers("api/user/**").hasRole("ADMIN")

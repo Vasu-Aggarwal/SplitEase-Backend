@@ -2,10 +2,7 @@ package com.vr.SplitEase.service;
 
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
-import com.vr.SplitEase.dto.response.AddTransactionResponse;
-import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
-import com.vr.SplitEase.dto.response.SettleUpTransactionResponse;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.entity.Group;
 
 import java.io.ByteArrayInputStream;
@@ -18,5 +15,5 @@ public interface TransactionService {
     SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest);
     DeleteResponse deleteTransaction(Integer transactionId);
     AddTransactionResponse getTransactionById(Integer transactionId);
-    List<AddTransactionResponse> getTransactionsByGroupId(Integer groupId);
+    List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId);
 }

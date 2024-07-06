@@ -7,10 +7,7 @@ import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.config.constants.SplitBy;
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.SettleUpTransactionRequest;
-import com.vr.SplitEase.dto.response.AddTransactionResponse;
-import com.vr.SplitEase.dto.response.CalculatedDebtResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
-import com.vr.SplitEase.dto.response.SettleUpTransactionResponse;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -45,8 +42,9 @@ public class TransactionServiceImpl implements TransactionService {
     private final CategoryRepository categoryRepository;
     private final UserGroupLedgerRepository userGroupLedgerRepository;
     private final UserLedgerRepository userLedgerRepository;
+    private final CurrentUserService currentUserService;
 
-    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, CategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository) {
+    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, CategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository, CurrentUserService currentUserService) {
         this.modelMapper = modelMapper;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
@@ -54,6 +52,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.categoryRepository = categoryRepository;
         this.userGroupLedgerRepository = userGroupLedgerRepository;
         this.userLedgerRepository = userLedgerRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
@@ -289,10 +288,21 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<AddTransactionResponse> getTransactionsByGroupId(Integer groupId) {
+    public List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        List<AddTransactionResponse> transactionResponses = transactions.stream().map(transaction -> modelMapper.map(transaction, AddTransactionResponse.class)).toList();
+        List<GetTransactionByGroupResponse> transactionResponses = transactions.stream().map(transaction -> {
+                LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
+                        .userUuid(userLedger1.getUser().getUserUuid())
+                        .amount(userLedger1.getAmount())
+                        .owedOrLent(userLedger1.getOwedOrLent())
+                        .build())
+                        .orElse(null);
+                GetTransactionByGroupResponse getTransactionByGroupResponse = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
+                getTransactionByGroupResponse.setLoggedInUserTransaction(loggedInUserTransaction);
+                return getTransactionByGroupResponse;
+            }
+        ).toList();
         return transactionResponses;
     }
 
