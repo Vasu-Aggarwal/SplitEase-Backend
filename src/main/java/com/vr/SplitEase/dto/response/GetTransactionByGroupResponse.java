@@ -19,7 +19,7 @@ public class GetTransactionByGroupResponse {
     private Integer groupId;
     private String userUuid;
     private AddCategoryResponse category;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdOn;
     private LoggedInUserTransaction loggedInUserTransaction;
 }

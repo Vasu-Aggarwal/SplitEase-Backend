@@ -1,6 +1,7 @@
 package com.vr.SplitEase.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.SplitEase.config.constants.LedgerStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
@@ -12,6 +13,7 @@ import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.*;
+import com.vr.SplitEase.service.RedisService;
 import com.vr.SplitEase.service.TransactionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -43,8 +45,9 @@ public class TransactionServiceImpl implements TransactionService {
     private final UserGroupLedgerRepository userGroupLedgerRepository;
     private final UserLedgerRepository userLedgerRepository;
     private final CurrentUserService currentUserService;
+    private final RedisService redisService;
 
-    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, CategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository, CurrentUserService currentUserService) {
+    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, CategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository, CurrentUserService currentUserService, RedisService redisService) {
         this.modelMapper = modelMapper;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
@@ -53,6 +56,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.userGroupLedgerRepository = userGroupLedgerRepository;
         this.userLedgerRepository = userLedgerRepository;
         this.currentUserService = currentUserService;
+        this.redisService = redisService;
     }
 
     @Override
@@ -289,23 +293,32 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId) {
-        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
-                    LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
-                                    .userUuid(userLedger1.getUser().getUserUuid())
-                                    .amount(userLedger1.getAmount())
-                                    .owedOrLent(userLedger1.getOwedOrLent())
-                                    .build())
-                            .orElse(null);
-                    GetTransactionByGroupResponse getTransactionByGroupResponse = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
-                    getTransactionByGroupResponse.setLoggedInUserTransaction(loggedInUserTransaction);
-                    return getTransactionByGroupResponse;
-                }
-        ).toList());
-        // Sort transactionResponses by createdOn in descending order (latest date first)
-        transactionResponses.sort(Comparator.comparing(GetTransactionByGroupResponse::getCreatedOn).reversed());
-        return transactionResponses;
+        //Check if data is already present in the redis or no
+        List<GetTransactionByGroupResponse> getTransactionByGroupResponse = redisService.getList("transactions_of_"+groupId, new TypeReference<List<GetTransactionByGroupResponse>>(){});
+        if (getTransactionByGroupResponse != null){
+            return getTransactionByGroupResponse;
+        } else {
+            Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
+                        LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
+                                        .userUuid(userLedger1.getUser().getUserUuid())
+                                        .amount(userLedger1.getAmount())
+                                        .owedOrLent(userLedger1.getOwedOrLent())
+                                        .build())
+                                .orElse(null);
+                        GetTransactionByGroupResponse getTransactionByGroupResponses = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
+                        getTransactionByGroupResponses.setLoggedInUserTransaction(loggedInUserTransaction);
+                        return getTransactionByGroupResponses;
+                    }
+            ).toList());
+            // Sort transactionResponses by createdOn in descending order (latest date first)
+            transactionResponses.sort(Comparator.comparing(GetTransactionByGroupResponse::getCreatedOn).reversed());
+            if (transactionResponses != null){
+                redisService.set("transactions_of_"+groupId, transactionResponses, 3000L);
+            }
+            return transactionResponses;
+        }
     }
 
     @Transactional
