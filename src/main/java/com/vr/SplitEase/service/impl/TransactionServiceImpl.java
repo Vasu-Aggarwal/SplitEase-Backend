@@ -291,18 +291,20 @@ public class TransactionServiceImpl implements TransactionService {
     public List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        List<GetTransactionByGroupResponse> transactionResponses = transactions.stream().map(transaction -> {
-                LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
-                        .userUuid(userLedger1.getUser().getUserUuid())
-                        .amount(userLedger1.getAmount())
-                        .owedOrLent(userLedger1.getOwedOrLent())
-                        .build())
-                        .orElse(null);
-                GetTransactionByGroupResponse getTransactionByGroupResponse = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
-                getTransactionByGroupResponse.setLoggedInUserTransaction(loggedInUserTransaction);
-                return getTransactionByGroupResponse;
-            }
-        ).toList();
+        List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
+                    LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
+                                    .userUuid(userLedger1.getUser().getUserUuid())
+                                    .amount(userLedger1.getAmount())
+                                    .owedOrLent(userLedger1.getOwedOrLent())
+                                    .build())
+                            .orElse(null);
+                    GetTransactionByGroupResponse getTransactionByGroupResponse = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
+                    getTransactionByGroupResponse.setLoggedInUserTransaction(loggedInUserTransaction);
+                    return getTransactionByGroupResponse;
+                }
+        ).toList());
+        // Sort transactionResponses by createdOn in descending order (latest date first)
+        transactionResponses.sort(Comparator.comparing(GetTransactionByGroupResponse::getCreatedOn).reversed());
         return transactionResponses;
     }
 
