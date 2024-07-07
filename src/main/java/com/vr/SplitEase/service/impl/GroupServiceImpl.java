@@ -5,10 +5,7 @@ import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
-import com.vr.SplitEase.dto.response.AddGroupResponse;
-import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
-import com.vr.SplitEase.dto.response.CreateUserResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.CannotRemoveUserFromGroupException;
@@ -264,6 +261,15 @@ public class GroupServiceImpl implements GroupService {
         Set<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
                 modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
                 ).collect(Collectors.toSet());
+        return userList;
+    }
+
+    @Override
+    public Set<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        Set<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
+                modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
+        ).collect(Collectors.toSet());
         return userList;
     }
 

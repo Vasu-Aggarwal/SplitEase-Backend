@@ -2,10 +2,7 @@ package com.vr.SplitEase.controller;
 
 import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
-import com.vr.SplitEase.dto.response.AddGroupResponse;
-import com.vr.SplitEase.dto.response.AddUserToGroupResponse;
-import com.vr.SplitEase.dto.response.CreateUserResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.service.EmailService;
 import com.vr.SplitEase.service.GroupService;
 import jakarta.mail.MessagingException;
@@ -62,9 +59,15 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupMembers/{groupId}")
-    public ResponseEntity<Set<CreateUserResponse>> getGroupMembers(@PathVariable Integer groupId){
-        Set<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
-        return new ResponseEntity<>(createUserResponses, HttpStatus.OK);
+    public ResponseEntity<Set<?>> getGroupMembers(@PathVariable Integer groupId, @RequestParam(required = false, defaultValue = "1") String v){
+        if ("2".equals(v)){
+            // Call the version 2 service method
+            Set<GetGroupMembersV2Response> getGroupMembersV2Responses = groupService.getGroupMembersV2(groupId);
+            return new ResponseEntity<>(getGroupMembersV2Responses, HttpStatus.OK);
+        } else {
+            Set<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
+            return new ResponseEntity<>(createUserResponses, HttpStatus.OK);
+        }
     }
 
     @GetMapping("/getGroupsByUser/{userUuid}")
