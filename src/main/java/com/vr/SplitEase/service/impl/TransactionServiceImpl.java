@@ -293,11 +293,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId) {
-        //Check if data is already present in the redis or no
-        List<GetTransactionByGroupResponse> getTransactionByGroupResponse = redisService.getList("transactions_of_"+groupId, new TypeReference<List<GetTransactionByGroupResponse>>(){});
-        if (getTransactionByGroupResponse != null){
-            return getTransactionByGroupResponse;
-        } else {
+//        //Check if data is already present in the redis or no
+//        List<GetTransactionByGroupResponse> getTransactionByGroupResponse = redisService.getList("transactions_of_"+groupId, new TypeReference<List<GetTransactionByGroupResponse>>(){});
+//        if (getTransactionByGroupResponse != null){
+//            return getTransactionByGroupResponse;
+//        } else {
             Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
             List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
@@ -318,7 +318,7 @@ public class TransactionServiceImpl implements TransactionService {
                 redisService.set("transactions_of_"+groupId, transactionResponses, 3000L);
             }
             return transactionResponses;
-        }
+//        }
     }
 
     @Transactional
