@@ -2,10 +2,7 @@ package com.vr.SplitEase.service.impl;
 
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
-import com.vr.SplitEase.dto.response.AddGroupResponse;
-import com.vr.SplitEase.dto.response.CreateUserResponse;
-import com.vr.SplitEase.dto.response.FriendsListResponse;
-import com.vr.SplitEase.dto.response.GetTotalNetBalance;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.entity.Group;
 import com.vr.SplitEase.entity.Role;
 import com.vr.SplitEase.entity.User;
@@ -75,10 +72,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CreateUserResponse getUserByUuid(String userUuid) {
+    public GetUserByUuidResponse getUserByUuid(String userUuid) {
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        CreateUserResponse createUserResponse = modelMapper.map(user, CreateUserResponse.class);
-        return createUserResponse;
+        GetUserByUuidResponse getUserByUuidResponse = modelMapper.map(user, GetUserByUuidResponse.class);
+        return getUserByUuidResponse;
     }
 
     @Override

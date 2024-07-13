@@ -105,6 +105,7 @@ public class AuthController {
         return new ResponseEntity<>(JwtResponse.builder()
                 .refreshToken(refreshToken.getRefreshToken())
                 .token(token)
+                .userUuid(user.getUserUuid())
                 .build(), HttpStatus.OK);
     }
 

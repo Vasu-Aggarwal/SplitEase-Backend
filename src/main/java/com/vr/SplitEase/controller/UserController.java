@@ -1,10 +1,7 @@
 package com.vr.SplitEase.controller;
 
 import com.vr.SplitEase.dto.request.CreateUserRequest;
-import com.vr.SplitEase.dto.response.CreateUserResponse;
-import com.vr.SplitEase.dto.response.DeleteResponse;
-import com.vr.SplitEase.dto.response.FriendsListResponse;
-import com.vr.SplitEase.dto.response.GetTotalNetBalance;
+import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.service.UserService;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -35,9 +32,9 @@ public class UserController {
     }
 
     @GetMapping("/getUserByUuid/{userUuid}")
-    public ResponseEntity<CreateUserResponse> getUserByUuid(@PathVariable String userUuid){
-        CreateUserResponse createUserResponse = userService.getUserByUuid(userUuid);
-        return new ResponseEntity<>(createUserResponse, HttpStatus.OK);
+    public ResponseEntity<GetUserByUuidResponse> getUserByUuid(@PathVariable String userUuid){
+        GetUserByUuidResponse getUserByUuidResponse = userService.getUserByUuid(userUuid);
+        return new ResponseEntity<>(getUserByUuidResponse, HttpStatus.OK);
     }
 
     @GetMapping("/getOverallUserBalance/{userUuid}")

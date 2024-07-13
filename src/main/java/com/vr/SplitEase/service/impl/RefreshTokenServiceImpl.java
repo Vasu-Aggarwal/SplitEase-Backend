@@ -16,7 +16,7 @@ import java.util.UUID;
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    public long refreshTokenValidity = 5*60*60*1000;   //5 hr
+    public long refreshTokenValidity = 30 * 24 * 60 * 60 * 1000L;   //1 month
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;

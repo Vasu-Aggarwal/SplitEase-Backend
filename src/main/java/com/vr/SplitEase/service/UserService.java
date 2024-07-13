@@ -5,6 +5,7 @@ import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
 import com.vr.SplitEase.dto.response.CreateUserResponse;
 import com.vr.SplitEase.dto.response.FriendsListResponse;
 import com.vr.SplitEase.dto.response.GetTotalNetBalance;
+import com.vr.SplitEase.dto.response.GetUserByUuidResponse;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public interface UserService {
     void deleteUser(String userUuid);
 
     //Get user by uuid
-    CreateUserResponse getUserByUuid(String userUuid);
+    GetUserByUuidResponse getUserByUuid(String userUuid);
 
     //Get user by email or mobile
     CreateUserResponse getUserByEmailOrMobile(SearchUserByEmailMobileRequest searchUserByEmailMobileRequest); //deferred for now
