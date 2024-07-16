@@ -5,23 +5,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-public class AddTransactionRequest {
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class UpdateTransaction {
+    @NotNull(message = "Transaction Id cannot be null")
     private Integer transactionId;
-    @NotNull(message = "Amount cannot be null")
     @Positive(message = "Amount must be greater than zero")
     private Double amount;
     @NotNull(message = "Split by cannot be null")

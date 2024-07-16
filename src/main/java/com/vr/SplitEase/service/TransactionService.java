@@ -11,6 +11,7 @@ import java.util.List;
 
 public interface TransactionService {
     AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest);
+    AddTransactionResponse updateTransaction(AddTransactionRequest addTransactionRequest);
     CalculatedDebtResponse calculateDebt(Integer groupId);
     SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest);
     DeleteResponse deleteTransaction(Integer transactionId);

@@ -34,6 +34,12 @@ public class TransactionController {
         return new ResponseEntity<>(addTransactionResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/updateTransaction")
+    public ResponseEntity<AddTransactionResponse> updateTransaction(@RequestBody @Valid AddTransactionRequest addTransactionRequest){
+        AddTransactionResponse addTransactionResponse = transactionService.updateTransaction(addTransactionRequest);
+        return new ResponseEntity<>(addTransactionResponse, HttpStatus.OK);
+    }
+
     @PostMapping("/settleUp")
     public ResponseEntity<SettleUpTransactionResponse> settleUpTransactionResponseResponseEntity(@RequestBody @Valid SettleUpTransactionRequest settleUpTransactionRequest){
         SettleUpTransactionResponse settleUpTransactionResponse = transactionService.settleUpTransaction(settleUpTransactionRequest);
