@@ -184,102 +184,102 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(addTransactionRequest.getGroup());
-        //update the transaction details
-        String emptyTransaction = "UPDATE Transaction t SET t.amount = 0.00, t.category = null, t.group = null, t.user = null, t.description = null WHERE t.id = :id";
-        entityManager.createQuery(emptyTransaction)
-                .setParameter("id", addTransactionRequest.getTransactionId())
-                .executeUpdate();
+//        //update the transaction details
+//        String emptyTransaction = "UPDATE Transaction t SET t.amount = 0.00, t.category = null, t.group = null, t.user = null, t.description = null WHERE t.id = :id";
+//        entityManager.createQuery(emptyTransaction)
+//                .setParameter("id", addTransactionRequest.getTransactionId())
+//                .executeUpdate();
+//
+//        //add new transaction data
+//
+//        //find the user who is paying in the transaction
+//        User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+//        //find the group
+//        Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+//        //find the category
+//        Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+//        transaction = modelMapper.map(addTransactionRequest, Transaction.class);
+//        transaction.setUser(user);
+//        transaction.setGroup(group);
+//        transaction.setCategory(category);
+//        transaction = transactionRepository.save(transaction);
+//
+//        //check the total amount set to all the users must be equal to the transaction amount
+//        Double amount = 0.0;
+//        for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
+//            amount += entry.getValue();
+//        }
+//
+//        //if amount is not equal then throw error
+//        if (!amount.equals(addTransactionRequest.getAmount())) {
+//            throw new BadApiRequestException("The sum of amount distributed should be equal to transaction amount");
+//        }
+//
+//        Optional<Map.Entry<String, Double>> result = addTransactionRequest.getUsersInvolved().entrySet().stream()
+//                .filter(entry -> entry.getKey().equals(user.getEmail())).findFirst();
+//
+//        if (result.isEmpty()){
+//            throw new BadApiRequestException("Paying user must be included in the involved user list");
+//        }
+//
+//        //Now add the split money to user ledger
+//        for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
+//            String userEmail = entry.getKey();
+//            Double userAmount = entry.getValue();
+//            UserLedger userLedger = new UserLedger();
+//            UserGroupLedger userGroupLedger = new UserGroupLedger();
+//            User involvedUser = userRepository.findByEmail(userEmail)
+//                    .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found"));
+//
+//            if (!involvedUser.getUserUuid().equals(addTransactionRequest.getUserUuid())) {
+//                userLedger.setTransaction(transaction);
+//                userLedger.setUser(involvedUser);
+//                userLedger.setLentFrom(user);
+//                userLedger.setIsActive(LedgerStatus.ACTIVE);
+//                userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
+//                userLedger.setAmount(userAmount);
+//
+//                //for each user update the user group ledger also
+//                userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+//                Double totalOwedAmount = userGroupLedger.getTotalOwed();
+//                userGroupLedger.setTotalOwed(totalOwedAmount + userAmount);
+//                try {
+//                    userGroupLedgerRepository.save(userGroupLedger);
+//                } catch (StackOverflowError e) {
+//                    throw e;
+//                }
+//            }
+//            else {
+//                userLedger.setTransaction(transaction);
+//                userLedger.setUser(involvedUser);
+//                userLedger.setLentFrom(null);
+//                userLedger.setIsActive(LedgerStatus.ACTIVE);
+//                userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
+//                userLedger.setAmount(addTransactionRequest.getAmount() - userAmount);
+//
+//                //Modify the totalLent amount in user ledger for the payer
+//                userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+//                Double totalLentAmount = userGroupLedger.getTotalLent();
+//                userGroupLedger.setTotalLent(totalLentAmount + (addTransactionRequest.getAmount() - userAmount));
+//                try {
+//                    userGroupLedgerRepository.save(userGroupLedger);
+//                } catch (StackOverflowError e) {
+//                    throw e;
+//                }
+//            }
+//            try {
+//                userLedgerRepository.save(userLedger);
+//            } catch (StackOverflowError e) {
+//                throw e;
+//            }
+//        }
+//        // Ensure transaction is committed before calling stored procedure
+//        entityManager.flush();
+//        entityManager.clear();
+//        transactionRepository.calculateNetBalance(addTransactionRequest.getGroup()); //set the net balance from the stored procedure
+//        AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
 
-        //add new transaction data
-
-        //find the user who is paying in the transaction
-        User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        //find the group
-        Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        //find the category
-        Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        transaction = modelMapper.map(addTransactionRequest, Transaction.class);
-        transaction.setUser(user);
-        transaction.setGroup(group);
-        transaction.setCategory(category);
-        transaction = transactionRepository.save(transaction);
-
-        //check the total amount set to all the users must be equal to the transaction amount
-        Double amount = 0.0;
-        for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
-            amount += entry.getValue();
-        }
-
-        //if amount is not equal then throw error
-        if (!amount.equals(addTransactionRequest.getAmount())) {
-            throw new BadApiRequestException("The sum of amount distributed should be equal to transaction amount");
-        }
-
-        Optional<Map.Entry<String, Double>> result = addTransactionRequest.getUsersInvolved().entrySet().stream()
-                .filter(entry -> entry.getKey().equals(user.getEmail())).findFirst();
-
-        if (result.isEmpty()){
-            throw new BadApiRequestException("Paying user must be included in the involved user list");
-        }
-
-        //Now add the split money to user ledger
-        for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
-            String userEmail = entry.getKey();
-            Double userAmount = entry.getValue();
-            UserLedger userLedger = new UserLedger();
-            UserGroupLedger userGroupLedger = new UserGroupLedger();
-            User involvedUser = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new ResourceNotFoundException("User with email " + userEmail + " not found"));
-
-            if (!involvedUser.getUserUuid().equals(addTransactionRequest.getUserUuid())) {
-                userLedger.setTransaction(transaction);
-                userLedger.setUser(involvedUser);
-                userLedger.setLentFrom(user);
-                userLedger.setIsActive(LedgerStatus.ACTIVE);
-                userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
-                userLedger.setAmount(userAmount);
-
-                //for each user update the user group ledger also
-                userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-                Double totalOwedAmount = userGroupLedger.getTotalOwed();
-                userGroupLedger.setTotalOwed(totalOwedAmount + userAmount);
-                try {
-                    userGroupLedgerRepository.save(userGroupLedger);
-                } catch (StackOverflowError e) {
-                    throw e;
-                }
-            }
-            else {
-                userLedger.setTransaction(transaction);
-                userLedger.setUser(involvedUser);
-                userLedger.setLentFrom(null);
-                userLedger.setIsActive(LedgerStatus.ACTIVE);
-                userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
-                userLedger.setAmount(addTransactionRequest.getAmount() - userAmount);
-
-                //Modify the totalLent amount in user ledger for the payer
-                userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-                Double totalLentAmount = userGroupLedger.getTotalLent();
-                userGroupLedger.setTotalLent(totalLentAmount + (addTransactionRequest.getAmount() - userAmount));
-                try {
-                    userGroupLedgerRepository.save(userGroupLedger);
-                } catch (StackOverflowError e) {
-                    throw e;
-                }
-            }
-            try {
-                userLedgerRepository.save(userLedger);
-            } catch (StackOverflowError e) {
-                throw e;
-            }
-        }
-        // Ensure transaction is committed before calling stored procedure
-        entityManager.flush();
-        entityManager.clear();
-        transactionRepository.calculateNetBalance(addTransactionRequest.getGroup()); //set the net balance from the stored procedure
-        AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
-
-        return addTransactionResponse;
+        return null;
     }
 
     @Override
