@@ -182,7 +182,6 @@ public class TransactionServiceImpl implements TransactionService {
             }
             userGroupLedgerRepository.save(userGroupLedger);
             transaction.getUserLedger().remove(userLedger);
-            userLedgerRepository.delete(userLedger);
         }
 
         entityManager.flush();
@@ -414,7 +413,6 @@ public class TransactionServiceImpl implements TransactionService {
             }
             userGroupLedgerRepository.save(userGroupLedger);
             transaction.getUserLedger().remove(userLedger);
-            userLedgerRepository.delete(userLedger);
         }
         entityManager.flush();
         entityManager.clear();
