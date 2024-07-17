@@ -166,13 +166,16 @@ public class TransactionServiceImpl implements TransactionService {
         //find the transaction
         Transaction transaction = transactionRepository.findById(addTransactionRequest.getTransactionId()).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
+        User user = transaction.getUser();
+        Group group = transaction.getGroup();
+
         //Update the user group ledger for each user
         for (UserLedger userLedger: transaction.getUserLedger()){
             User involvedUser = userLedger.getUser();
             Double userAmount = userLedger.getAmount();
-            UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, transaction.getGroup()).orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
+            UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
 
-            if (!involvedUser.getUserUuid().equals(transaction.getUser().getUserUuid())){
+            if (!involvedUser.getUserUuid().equals(user.getUserUuid())){
                 userGroupLedger.setTotalOwed(userGroupLedger.getTotalOwed() - userAmount);
             } else {
                 userGroupLedger.setTotalLent(userGroupLedger.getTotalLent() - userAmount);
@@ -184,7 +187,7 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(addTransactionRequest.getGroup());
-//        //update the transaction details
+        //update the transaction details
 //        String emptyTransaction = "UPDATE Transaction t SET t.amount = 0.00, t.category = null, t.group = null, t.user = null, t.description = null WHERE t.id = :id";
 //        entityManager.createQuery(emptyTransaction)
 //                .setParameter("id", addTransactionRequest.getTransactionId())
@@ -394,8 +397,11 @@ public class TransactionServiceImpl implements TransactionService {
         User user = transaction.getUser();
         Group group = transaction.getGroup();
 
+        // Create a separate list to avoid ConcurrentModificationException
+        List<UserLedger> userLedgers = new ArrayList<>(transaction.getUserLedger());
+
         //Update the user group ledger for each user
-        for (UserLedger userLedger: transaction.getUserLedger()){
+        for (UserLedger userLedger: userLedgers){
             User involvedUser = userLedger.getUser();
             Double userAmount = userLedger.getAmount();
             UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
@@ -406,6 +412,7 @@ public class TransactionServiceImpl implements TransactionService {
                 userGroupLedger.setTotalLent(userGroupLedger.getTotalLent() - userAmount);
             }
             userGroupLedgerRepository.save(userGroupLedger);
+            transaction.getUserLedger().remove(userLedger);
             userLedgerRepository.delete(userLedger);
         }
         entityManager.flush();

@@ -35,6 +35,6 @@ public class Transaction extends Auditable{
     private Category category;
     private String description;
 
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<UserLedger> userLedger = new HashSet<>();
 }
