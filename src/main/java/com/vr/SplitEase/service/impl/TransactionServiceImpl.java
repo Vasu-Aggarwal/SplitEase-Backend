@@ -481,13 +481,6 @@ public class TransactionServiceImpl implements TransactionService {
                 if (debtorAmount > 0 && creditorAmount > 0) {
                     double settlementAmount = Math.min(debtorAmount, creditorAmount);
 
-                    // Perform transaction from debtor to creditor
-                    UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(debtorUser, group).orElseThrow(() -> new ResourceNotFoundException("User Group Ledger does not exists"));
-                    userGroupLedger.setLentFrom(creditorUser);
-                    userGroupLedger.setNetBalance(settlementAmount);
-                    userGroupLedger.setTotalLent(0.0);
-                    userGroupLedger.setTotalOwed(0.0);
-
                     // Add lending details for creditor
                     creditorLendingMap.computeIfAbsent(creditorUser.getUserUuid(), k -> new ArrayList<>())
                             .add(CalculatedDebtResponse.LentDetails.builder()
