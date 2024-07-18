@@ -492,6 +492,7 @@ public class TransactionServiceImpl implements TransactionService {
                     creditorLendingMap.computeIfAbsent(creditorUser.getUserUuid(), k -> new ArrayList<>())
                             .add(CalculatedDebtResponse.LentDetails.builder()
                                     .uuid(debtorUser.getUserUuid())
+                                    .name(debtorUser.getName())
                                     .amount(settlementAmount)
                                     .build());
 
@@ -499,10 +500,11 @@ public class TransactionServiceImpl implements TransactionService {
                     debtorLendingMap.computeIfAbsent(debtorUser.getUserUuid(), k -> new ArrayList<>())
                             .add(CalculatedDebtResponse.LentDetails.builder()
                                     .uuid(creditorUser.getUserUuid())
+                                    .name(creditorUser.getName())
                                     .amount(settlementAmount)
                                     .build());
 
-                    System.out.println(debtorUser.getUserUuid() + " pays " + settlementAmount + " to " + creditorUser.getUserUuid());
+                    System.out.println(debtorUser.getName() + " pays " + settlementAmount + " to " + creditorUser.getName());
 
                     // Update debtor's amount
                     debtorAmount -= settlementAmount;
@@ -517,8 +519,10 @@ public class TransactionServiceImpl implements TransactionService {
         // Create Creditor list for response
         for (Map.Entry<String, List<CalculatedDebtResponse.LentDetails>> entry : creditorLendingMap.entrySet()) {
             double getsBackAmount = entry.getValue().stream().mapToDouble(CalculatedDebtResponse.LentDetails::getAmount).sum();
+            User creditorUser = userRepository.findById(entry.getKey()).orElseThrow(() -> new ResourceNotFoundException("Creditor user not found"));
             creditorList.add(CalculatedDebtResponse.Creditor.builder()
-                    .uuid(entry.getKey())
+                    .uuid(creditorUser.getUserUuid())
+                    .name(creditorUser.getName())
                     .getsBack(getsBackAmount)
                     .lentTo(entry.getValue())
                     .build());
@@ -526,8 +530,10 @@ public class TransactionServiceImpl implements TransactionService {
 
         // Create Debtor list for response
         for (Map.Entry<String, List<CalculatedDebtResponse.LentDetails>> entry : debtorLendingMap.entrySet()) {
+            User debtorUser = userRepository.findById(entry.getKey()).orElseThrow(() -> new ResourceNotFoundException("Creditor user not found"));
             debtorList.add(CalculatedDebtResponse.Debtor.builder()
-                    .uuid(entry.getKey())
+                    .uuid(debtorUser.getUserUuid())
+                    .name(debtorUser.getName())
                     .lentFrom(entry.getValue())
                     .build());
         }

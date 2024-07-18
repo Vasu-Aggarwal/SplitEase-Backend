@@ -21,6 +21,7 @@ public class CalculatedDebtResponse {
     @Builder
     public static class Creditor{
         private String uuid;
+        private String name;
         private Double getsBack;
         private List<LentDetails> lentTo;
     }
@@ -32,6 +33,7 @@ public class CalculatedDebtResponse {
     @Builder
     public static class Debtor{
         private String uuid;
+        private String name;
         private List<LentDetails> lentFrom;
     }
 
@@ -42,6 +44,7 @@ public class CalculatedDebtResponse {
     @Builder
     public static class LentDetails{
         private String uuid;
+        private String name;
         private Double amount;
     }
 }
