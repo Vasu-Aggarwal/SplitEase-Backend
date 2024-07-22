@@ -150,6 +150,7 @@ public class TransactionServiceImpl implements TransactionService {
             entityManager.flush();
             entityManager.clear();
             transactionRepository.calculateNetBalance(addTransactionRequest.getGroup()); //set the net balance from the stored procedure
+            transactionRepository.resetEqualBalances(addTransactionRequest.getGroup());
             addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
         } else {
             throw new BadApiRequestException("Something went wrong");
@@ -187,6 +188,7 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(addTransactionRequest.getGroup());
+        transactionRepository.resetEqualBalances(addTransactionRequest.getGroup());
         //update the transaction details
         String emptyTransaction = "UPDATE Transaction t SET t.amount = 0.00, t.category = null, t.group = null, t.user = null, t.description = null WHERE t.id = :id";
         entityManager.createQuery(emptyTransaction)
@@ -280,6 +282,7 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(addTransactionRequest.getGroup()); //set the net balance from the stored procedure
+        transactionRepository.resetEqualBalances(addTransactionRequest.getGroup());
         AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
 
         return addTransactionResponse;
@@ -385,6 +388,7 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(settleUpTransactionRequest.getGroup());
+        transactionRepository.resetEqualBalances(settleUpTransactionRequest.getGroup());
         return settleUpTransactionResponse;
     }
 
@@ -417,6 +421,7 @@ public class TransactionServiceImpl implements TransactionService {
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(group.getGroupId());
+        transactionRepository.resetEqualBalances(group.getGroupId());
         transactionRepository.delete(transaction);
         return DeleteResponse.builder().message("Transaction deleted successfully").build();
     }

@@ -13,5 +13,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Procedure(procedureName = "CalculateNetBalance")
     void calculateNetBalance(@Param("groupId") Integer groupId);
 
+    @Procedure(procedureName = "ResetEqualBalances")
+    void resetEqualBalances(@Param("groupId") Integer groupId);
+
     Optional<List<Transaction>> findByGroup(Group group);
 }
