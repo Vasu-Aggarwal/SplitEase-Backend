@@ -15,7 +15,7 @@ public interface GroupService {
     AddUserToGroupResponse addUsersToGroup(AddUserToGroupRequest addUserToGroupRequest) throws MessagingException;
     ByteArrayInputStream generateExcelForGroupTransactions(Integer groupId) throws IOException;
     DeleteResponse removeUserFromGroup(Integer groupId, String userUuid);
-    Set<CreateUserResponse> getGroupMembers(Integer groupId);
-    Set<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId);
+    List<CreateUserResponse> getGroupMembers(Integer groupId);
+    List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId);
     List<AddGroupResponse> getGroupsByUserUuid(String userUuid);
 }

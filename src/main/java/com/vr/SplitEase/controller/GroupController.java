@@ -59,13 +59,13 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupMembers/{groupId}")
-    public ResponseEntity<Set<?>> getGroupMembers(@PathVariable Integer groupId, @RequestParam(required = false, defaultValue = "1") String v){
+    public ResponseEntity<List<?>> getGroupMembers(@PathVariable Integer groupId, @RequestParam(required = false, defaultValue = "1") String v){
         if ("2".equals(v)){
             // Call the version 2 service method
-            Set<GetGroupMembersV2Response> getGroupMembersV2Responses = groupService.getGroupMembersV2(groupId);
+            List<GetGroupMembersV2Response> getGroupMembersV2Responses = groupService.getGroupMembersV2(groupId);
             return new ResponseEntity<>(getGroupMembersV2Responses, HttpStatus.OK);
         } else {
-            Set<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
+            List<CreateUserResponse> createUserResponses = groupService.getGroupMembers(groupId);
             return new ResponseEntity<>(createUserResponses, HttpStatus.OK);
         }
     }

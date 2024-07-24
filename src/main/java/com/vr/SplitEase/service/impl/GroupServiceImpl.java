@@ -256,20 +256,21 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Set<CreateUserResponse> getGroupMembers(Integer groupId) {
+    public List<CreateUserResponse> getGroupMembers(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        Set<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
+        List<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
                 modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
-                ).collect(Collectors.toSet());
+                ).collect(Collectors.toList());
         return userList;
     }
 
     @Override
-    public Set<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId) {
+    public List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        Set<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
+        List<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
                 modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
-        ).collect(Collectors.toSet());
+        ).sorted(Comparator.comparing(GetGroupMembersV2Response::getName))
+                .collect(Collectors.toList());
         return userList;
     }
 
