@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -44,10 +45,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.logout((logout) -> logout.logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+        http.logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(new CustomLogoutSuccessHandler())
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
+                        .addLogoutHandler(new SecurityContextLogoutHandler())
                         .permitAll())
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
@@ -66,13 +69,13 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(point))
                 .exceptionHandling(ex-> ex.accessDeniedHandler(accessDenied))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+                .authenticationProvider(daoAuthenticationProvider());
 
-        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
 
         //        http.authorizeHttpRequests((auth) -> auth.anyRequest().authenticated())
         //                .httpBasic(Customizer.withDefaults());
-        http.authenticationProvider(daoAuthenticationProvider());
 
         return http.build();
     }

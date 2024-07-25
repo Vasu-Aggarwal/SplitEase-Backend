@@ -16,6 +16,7 @@ import com.vr.SplitEase.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthController {
 
     @Autowired
@@ -54,8 +56,6 @@ public class AuthController {
 
     @Autowired
     private JwtHelper helper;
-
-    private Logger logger = LoggerFactory.getLogger(AuthController.class);
 
 
     @PostMapping("/login")
@@ -80,15 +80,6 @@ public class AuthController {
     public ResponseEntity<CreateUserResponse> registerNewUser(@RequestBody @Valid CreateUserRequest userRegisterRequest) {
         CreateUserResponse user = this.userService.addUpdateUser(userRegisterRequest);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        if (authentication != null) {
-            new SecurityContextLogoutHandler().logout(request, response, authentication);
-//            refreshTokenService.deleteByUserName(authentication.getName());
-        }
-        return ResponseEntity.ok("Logout successful");
     }
 
 //    @PostMapping("/registerAdminUser")
