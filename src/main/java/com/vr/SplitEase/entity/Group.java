@@ -27,6 +27,8 @@ public class Group extends Auditable{
     @Column(name = "total_amount")
     private Double totalAmount;
     private Integer status;
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "created_by")

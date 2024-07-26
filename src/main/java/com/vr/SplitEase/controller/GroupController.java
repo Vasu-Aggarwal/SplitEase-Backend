@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,8 +28,12 @@ public class GroupController {
     private GroupService groupService;
 
     @PostMapping("/addUpdateGroup")
-    public ResponseEntity<AddGroupResponse> addUpdateGroup(@RequestBody @Valid AddGroupRequest addGroupRequest){
-        AddGroupResponse addGroupResponse = groupService.addUpdateGroup(addGroupRequest);
+    public ResponseEntity<AddGroupResponse> addUpdateGroup(
+            @RequestParam("name") String name,
+            @RequestParam(value = "id", required = false) Integer groupId,
+            @RequestParam("image")MultipartFile image
+            ){
+        AddGroupResponse addGroupResponse = groupService.addUpdateGroup(name, groupId, image);
         return new ResponseEntity<>(addGroupResponse, HttpStatus.OK);
     }
 

@@ -1,5 +1,6 @@
 package com.vr.SplitEase.service.impl;
 
+import com.cloudinary.Cloudinary;
 import com.vr.SplitEase.config.EmailScheduler;
 import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
@@ -11,6 +12,7 @@ import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.CannotRemoveUserFromGroupException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.*;
+import com.vr.SplitEase.service.CloudinaryImageService;
 import com.vr.SplitEase.service.EmailService;
 import com.vr.SplitEase.service.GroupService;
 import jakarta.mail.MessagingException;
@@ -20,6 +22,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,8 +42,9 @@ public class GroupServiceImpl implements GroupService {
     private final UserLedgerRepository userLedgerRepository;
     private final EmailService emailService;
     private final EmailScheduler emailScheduler;
+    private final CloudinaryImageService cloudinaryImageService;
 
-    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository, EmailService emailService, EmailScheduler emailScheduler) {
+    public GroupServiceImpl(ModelMapper modelMapper, GroupRepository groupRepository, UserGroupLedgerRepository userGroupLedgerRepository, CurrentUserService currentUserService, UserRepository userRepository, TransactionRepository transactionRepository, UserLedgerRepository userLedgerRepository, EmailService emailService, EmailScheduler emailScheduler, CloudinaryImageService cloudinaryImageService) {
         this.modelMapper = modelMapper;
         this.groupRepository = groupRepository;
         this.userGroupLedgerRepository = userGroupLedgerRepository;
@@ -50,27 +54,36 @@ public class GroupServiceImpl implements GroupService {
         this.userLedgerRepository = userLedgerRepository;
         this.emailService = emailService;
         this.emailScheduler = emailScheduler;
+        this.cloudinaryImageService = cloudinaryImageService;
     }
 
 
     @Override
     @Transactional
-    public AddGroupResponse addUpdateGroup(AddGroupRequest addGroupRequest) {
-        Group group;
-        if (addGroupRequest.getGroupId() != null){
-            group = groupRepository.findById(addGroupRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+    public AddGroupResponse addUpdateGroup(String name, Integer groupId, MultipartFile image) {
+        Group group = new Group();
+        if (groupId != null){
+            group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+            if (image != null && !image.isEmpty()) {
+                Map imageResponse = cloudinaryImageService.uploadImage(image);
+                group.setImageUrl(imageResponse.get("url").toString());
+            }
             //Allow update of active state groups.
             if (Objects.equals(group.getStatus(), GroupStatus.ACTIVE.getStatus())){
-                group.setName(addGroupRequest.getName());
+                group.setName(name);
             } else {
                 throw new BadApiRequestException("Cannot update inactive group.");
             }
             groupRepository.save(group);
         } else {
-            group = modelMapper.map(addGroupRequest, Group.class);
+            group.setName(name);
             group.setStatus(GroupStatus.ACTIVE.getStatus());
             group.setTotalAmount(0.0);
             group.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
+            if (image != null && !image.isEmpty()) {
+                Map imageResponse = cloudinaryImageService.uploadImage(image);
+                group.setImageUrl(imageResponse.get("url").toString());
+            }
             groupRepository.save(group);
             //Add the user (who is creating the group) to the group
             UserGroupLedger userGroupLedger = new UserGroupLedger();
