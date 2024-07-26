@@ -17,4 +17,5 @@ public class AddGroupResponse {
     private String name;
     private Double totalAmount;
     private String status;
+    private String imageUrl;
 }
