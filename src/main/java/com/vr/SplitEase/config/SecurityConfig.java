@@ -73,10 +73,6 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(daoAuthenticationProvider());
 
-
-        //        http.authorizeHttpRequests((auth) -> auth.anyRequest().authenticated())
-        //                .httpBasic(Customizer.withDefaults());
-
         return http.build();
     }
 

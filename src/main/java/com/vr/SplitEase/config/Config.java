@@ -1,5 +1,6 @@
 package com.vr.SplitEase.config;
 
+import com.cloudinary.Cloudinary;
 import com.vr.SplitEase.service.impl.AuditorAwareImpl;
 import com.vr.SplitEase.service.impl.CurrentUserService;
 import jakarta.annotation.PostConstruct;
@@ -9,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 @Configuration
@@ -35,5 +38,15 @@ public class Config {
     public void init() {
 
         TimeZone.setDefault(TimeZone.getTimeZone("GMT+5:30"));
+    }
+
+    @Bean
+    public Cloudinary cloudinary(){
+        Map cloudinaryConfig = new HashMap();
+        cloudinaryConfig.put("cloud_name", "dyhym5vjz");
+        cloudinaryConfig.put("api_key", "516617476357393");
+        cloudinaryConfig.put("api_secret", "P7wSXRtqeiycCLLdAmDSIJBzXHo");
+
+        return new Cloudinary(cloudinaryConfig);
     }
 }
