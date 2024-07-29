@@ -18,6 +18,6 @@ public interface GroupService {
     DeleteResponse removeUserFromGroup(Integer groupId, String userUuid);
     List<CreateUserResponse> getGroupMembers(Integer groupId);
     List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId);
-    List<AddGroupResponse> getGroupsByUserUuid(String userUuid);
+    List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid);
     GroupSummaryResponse getGroupSpendingSummary(Integer groupId);
 }
