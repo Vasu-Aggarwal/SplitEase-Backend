@@ -19,4 +19,5 @@ public interface GroupService {
     List<CreateUserResponse> getGroupMembers(Integer groupId);
     List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId);
     List<AddGroupResponse> getGroupsByUserUuid(String userUuid);
+    GroupSummaryResponse getGroupSpendingSummary(Integer groupId);
 }

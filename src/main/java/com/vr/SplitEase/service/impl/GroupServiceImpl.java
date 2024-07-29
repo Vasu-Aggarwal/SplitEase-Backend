@@ -298,4 +298,17 @@ public class GroupServiceImpl implements GroupService {
 
         return groups;
     }
+
+    @Override
+    public GroupSummaryResponse getGroupSpendingSummary(Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(()-> new ResourceNotFoundException("Group not found"));
+
+        return GroupSummaryResponse.builder()
+                .groupId(groupId)
+                .groupName(group.getName())
+                .totalGroupSpending(group.getTotalAmount())
+                .userPaidFor(0.00)
+                .userTotalShare(0.00)
+                .build();
+    }
 }

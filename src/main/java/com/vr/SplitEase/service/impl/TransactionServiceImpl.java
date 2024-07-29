@@ -96,6 +96,10 @@ public class TransactionServiceImpl implements TransactionService {
                 throw new BadApiRequestException("Paying user must be included in the involved user list");
             }
 
+            //add the transaction amount in total group spending
+            group.setTotalAmount(group.getTotalAmount()+addTransactionRequest.getAmount());
+            groupRepository.save(group);
+
             //Now add the split money to user ledger
             for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
                 String userEmail = entry.getKey();
@@ -202,6 +206,8 @@ public class TransactionServiceImpl implements TransactionService {
         User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         //find the group
         Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        group.setTotalAmount((group.getTotalAmount() - transaction.getAmount())+addTransactionRequest.getAmount());
         //find the category
         Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         transaction = modelMapper.map(addTransactionRequest, Transaction.class);
@@ -401,6 +407,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         User user = transaction.getUser();
         Group group = transaction.getGroup();
+
+        group.setTotalAmount(group.getTotalAmount()-transaction.getAmount());
+        groupRepository.save(group);
 
         // Create a separate list to avoid ConcurrentModificationException
         List<UserLedger> userLedgers = new ArrayList<>(transaction.getUserLedger());

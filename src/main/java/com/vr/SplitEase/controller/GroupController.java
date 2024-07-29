@@ -80,4 +80,10 @@ public class GroupController {
         List<AddGroupResponse> addGroupResponses = groupService.getGroupsByUserUuid(userUuid);
         return new ResponseEntity<>(addGroupResponses, HttpStatus.OK);
     }
+
+    @GetMapping("/getGroupSpendingSummary/{groupId}")
+    public ResponseEntity<GroupSummaryResponse> getGroupSpendingSummary(@PathVariable Integer groupId){
+        GroupSummaryResponse groupSummaryResponse = groupService.getGroupSpendingSummary(groupId);
+        return new ResponseEntity<>(groupSummaryResponse, HttpStatus.OK);
+    }
 }
