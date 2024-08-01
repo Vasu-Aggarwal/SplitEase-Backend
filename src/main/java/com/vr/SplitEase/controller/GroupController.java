@@ -86,4 +86,10 @@ public class GroupController {
         GroupSummaryResponse groupSummaryResponse = groupService.getGroupSpendingSummary(groupId);
         return new ResponseEntity<>(groupSummaryResponse, HttpStatus.OK);
     }
+
+    @GetMapping("/getGroupInfo/{groupId}")
+    public ResponseEntity<AddGroupResponse> getGroupInfo(@PathVariable Integer groupId){
+        AddGroupResponse addGroupResponse = groupService.getGroupInfo(groupId);
+        return new ResponseEntity<>(addGroupResponse, HttpStatus.OK);
+    }
 }

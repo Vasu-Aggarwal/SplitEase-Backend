@@ -315,4 +315,11 @@ public class GroupServiceImpl implements GroupService {
                 .userTotalShare(0.00)
                 .build();
     }
+
+    @Override
+    public AddGroupResponse getGroupInfo(Integer groupId) {
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        AddGroupResponse addGroupResponse = modelMapper.map(group, AddGroupResponse.class);
+        return addGroupResponse;
+    }
 }
