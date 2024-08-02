@@ -20,5 +20,5 @@ public class AddCategoryRequest {
     @NotNull(message = "Category name cannot be null")
     @NotBlank(message = "Category name cannot be empty")
     private String subCategoryName;
-    private String categoryImg;
+    private String imageUrl;
 }
