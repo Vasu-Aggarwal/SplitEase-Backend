@@ -34,6 +34,7 @@ public class CalculatedDebtResponse {
     public static class Debtor{
         private String uuid;
         private String name;
+        private Double totalReturnAmount;
         private List<LentDetails> lentFrom;
     }
 

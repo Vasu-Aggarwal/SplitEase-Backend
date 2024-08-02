@@ -42,13 +42,13 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final CategoryRepository categoryRepository;
+    private final SubCategoryRepository categoryRepository;
     private final UserGroupLedgerRepository userGroupLedgerRepository;
     private final UserLedgerRepository userLedgerRepository;
     private final CurrentUserService currentUserService;
     private final RedisService redisService;
 
-    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, CategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository, CurrentUserService currentUserService, RedisService redisService) {
+    public TransactionServiceImpl(ModelMapper modelMapper, TransactionRepository transactionRepository, UserRepository userRepository, GroupRepository groupRepository, SubCategoryRepository categoryRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLedgerRepository userLedgerRepository, CurrentUserService currentUserService, RedisService redisService) {
         this.modelMapper = modelMapper;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
@@ -71,7 +71,7 @@ public class TransactionServiceImpl implements TransactionService {
             //find the group
             Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             //find the category
-            Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            SubCategory category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
             Transaction transaction = modelMapper.map(addTransactionRequest, Transaction.class);
             transaction.setUser(user);
             transaction.setGroup(group);
@@ -209,7 +209,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         group.setTotalAmount((group.getTotalAmount() - transaction.getAmount())+addTransactionRequest.getAmount());
         //find the category
-        Category category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        SubCategory category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         transaction = modelMapper.map(addTransactionRequest, Transaction.class);
         transaction.setUser(user);
         transaction.setGroup(group);
@@ -538,9 +538,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         // Create Debtor list for response
         for (Map.Entry<String, List<CalculatedDebtResponse.LentDetails>> entry : debtorLendingMap.entrySet()) {
+            double totalReturnAmount = entry.getValue().stream().mapToDouble(CalculatedDebtResponse.LentDetails::getAmount).sum();
             User debtorUser = userRepository.findById(entry.getKey()).orElseThrow(() -> new ResourceNotFoundException("Creditor user not found"));
             debtorList.add(CalculatedDebtResponse.Debtor.builder()
                     .uuid(debtorUser.getUserUuid())
+                    .totalReturnAmount(totalReturnAmount)
                     .name(debtorUser.getName())
                     .lentFrom(entry.getValue())
                     .build());
