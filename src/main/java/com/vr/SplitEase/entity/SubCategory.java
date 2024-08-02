@@ -23,6 +23,9 @@ public class SubCategory extends Auditable{
 
     private String name;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
