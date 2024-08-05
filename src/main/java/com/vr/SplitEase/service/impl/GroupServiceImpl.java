@@ -2,6 +2,7 @@ package com.vr.SplitEase.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.vr.SplitEase.config.EmailScheduler;
+import com.vr.SplitEase.config.constants.AppConstants;
 import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
 import com.vr.SplitEase.dto.request.AddGroupRequest;
@@ -288,18 +289,38 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid) {
+    public List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid, String searchBy) {
         //get the user from the uuid
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //Get the list of groups the user is part of
         List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        List<GetGroupsByUserResponse> groups = userGroupLedgers.stream().map(userGroupLedger -> {
-            GetGroupsByUserResponse getGroupsByUserResponse = modelMapper.map(userGroupLedger.getGroup(), GetGroupsByUserResponse.class);
-            getGroupsByUserResponse.setUserBalance(userGroupLedger.getNetBalance());
-            return getGroupsByUserResponse;
-        }).sorted(Comparator.comparing(GetGroupsByUserResponse::getName)).collect(Collectors.toList());
-
+        List<GetGroupsByUserResponse> groups = new ArrayList<>();
+        if (searchBy.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
+            groups = userGroupLedgers.stream().map(userGroupLedger -> {
+                GetGroupsByUserResponse getGroupsByUserResponse = modelMapper.map(userGroupLedger.getGroup(), GetGroupsByUserResponse.class);
+                getGroupsByUserResponse.setUserBalance(userGroupLedger.getNetBalance());
+                return getGroupsByUserResponse;
+            }).sorted(Comparator.comparing(GetGroupsByUserResponse::getName)).collect(Collectors.toList());
+        } else if(searchBy.equalsIgnoreCase(AppConstants.GROUPS_YOU_OWE.getValue())){
+            groups = userGroupLedgers.stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()>0).map(userGroupLedger -> {
+                GetGroupsByUserResponse getGroupsByUserResponse = modelMapper.map(userGroupLedger.getGroup(), GetGroupsByUserResponse.class);
+                getGroupsByUserResponse.setUserBalance(userGroupLedger.getNetBalance());
+                return getGroupsByUserResponse;
+            }).sorted(Comparator.comparing(GetGroupsByUserResponse::getName)).collect(Collectors.toList());
+        } else if(searchBy.equalsIgnoreCase(AppConstants.GROUPS_THAT_OWE_YOU.getValue())){
+            groups = userGroupLedgers.stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()<0).map(userGroupLedger -> {
+                GetGroupsByUserResponse getGroupsByUserResponse = modelMapper.map(userGroupLedger.getGroup(), GetGroupsByUserResponse.class);
+                getGroupsByUserResponse.setUserBalance(userGroupLedger.getNetBalance());
+                return getGroupsByUserResponse;
+            }).sorted(Comparator.comparing(GetGroupsByUserResponse::getName)).collect(Collectors.toList());
+        } else if(searchBy.equalsIgnoreCase(AppConstants.OUTSTANDING_BALANCE.getValue())){
+            groups = userGroupLedgers.stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()!=0).map(userGroupLedger -> {
+                GetGroupsByUserResponse getGroupsByUserResponse = modelMapper.map(userGroupLedger.getGroup(), GetGroupsByUserResponse.class);
+                getGroupsByUserResponse.setUserBalance(userGroupLedger.getNetBalance());
+                return getGroupsByUserResponse;
+            }).sorted(Comparator.comparing(GetGroupsByUserResponse::getName)).collect(Collectors.toList());
+        }
         return groups;
     }
 

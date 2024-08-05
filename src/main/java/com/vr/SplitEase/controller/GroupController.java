@@ -76,8 +76,11 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupsByUser/{userUuid}")
-    public ResponseEntity<List<GetGroupsByUserResponse>> getGroupsByUser(@PathVariable String userUuid){
-        List<GetGroupsByUserResponse> getGroupsByUserResponses = groupService.getGroupsByUserUuid(userUuid);
+    public ResponseEntity<List<GetGroupsByUserResponse>> getGroupsByUser(
+            @PathVariable String userUuid,
+            @RequestParam(defaultValue = "allGroups") String search_by
+    ){
+        List<GetGroupsByUserResponse> getGroupsByUserResponses = groupService.getGroupsByUserUuid(userUuid, search_by);
         return new ResponseEntity<>(getGroupsByUserResponses, HttpStatus.OK);
     }
 

@@ -18,7 +18,7 @@ public interface GroupService {
     DeleteResponse removeUserFromGroup(Integer groupId, String userUuid);
     List<CreateUserResponse> getGroupMembers(Integer groupId);
     List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId);
-    List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid);
+    List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid, String searchBy);
     GroupSummaryResponse getGroupSpendingSummary(Integer groupId);
     AddGroupResponse getGroupInfo(Integer groupId);
 }
