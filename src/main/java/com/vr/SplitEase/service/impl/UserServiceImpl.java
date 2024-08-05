@@ -1,5 +1,6 @@
 package com.vr.SplitEase.service.impl;
 
+import com.vr.SplitEase.config.constants.AppConstants;
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
 import com.vr.SplitEase.dto.response.*;
@@ -98,10 +99,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid) {
+    public GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid, String searchVal) {
         //find the user by uuid
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Double totalNetBalance = user.getUserGroups().stream().mapToDouble(UserGroupLedger::getNetBalance).sum();
+        double totalNetBalance = 0.0;
+        if (searchVal.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
+            totalNetBalance = user.getUserGroups().stream().mapToDouble(UserGroupLedger::getNetBalance).sum();
+        } else if (searchVal.equalsIgnoreCase(AppConstants.GROUPS_YOU_OWE.getValue())){
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()>0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+        } else if (searchVal.equalsIgnoreCase(AppConstants.GROUPS_THAT_OWE_YOU.getValue())){
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()<0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+        } else if (searchVal.equalsIgnoreCase(AppConstants.OUTSTANDING_BALANCE.getValue())){
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()!=0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+        }
         return GetTotalNetBalance.builder().netBalance(totalNetBalance).build();
     }
 

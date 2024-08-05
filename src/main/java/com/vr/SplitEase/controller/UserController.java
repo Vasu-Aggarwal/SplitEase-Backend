@@ -1,5 +1,6 @@
 package com.vr.SplitEase.controller;
 
+import com.vr.SplitEase.config.constants.AppConstants;
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.response.*;
 import com.vr.SplitEase.service.UserService;
@@ -38,8 +39,11 @@ public class UserController {
     }
 
     @GetMapping("/getOverallUserBalance/{userUuid}")
-    public ResponseEntity<GetTotalNetBalance> getTotalNetBalanceResponseEntity(@PathVariable String userUuid){
-        GetTotalNetBalance getTotalNetBalance = userService.getTotalNetBalanceByUserUuid(userUuid);
+    public ResponseEntity<GetTotalNetBalance> getTotalNetBalanceResponseEntity(
+            @PathVariable String userUuid,
+            @RequestParam(defaultValue = "allGroups") String search_val
+    ){
+        GetTotalNetBalance getTotalNetBalance = userService.getTotalNetBalanceByUserUuid(userUuid, search_val);
         return ResponseEntity.ok(getTotalNetBalance);
     }
 

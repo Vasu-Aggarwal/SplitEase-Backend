@@ -23,7 +23,7 @@ public interface UserService {
     //Get user by email or mobile
     CreateUserResponse getUserByEmailOrMobile(SearchUserByEmailMobileRequest searchUserByEmailMobileRequest); //deferred for now
 
-    GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid);
+    GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid, String searchVal);
 
     List<FriendsListResponse> userFriendsList(String userUuid);
 }
