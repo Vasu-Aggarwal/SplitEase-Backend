@@ -17,4 +17,5 @@ public interface TransactionService {
     DeleteResponse deleteTransaction(Integer transactionId);
     AddTransactionResponse getTransactionById(Integer transactionId);
     List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId);
+    List<GetTransactionByGroupResponse> getTransactionsByUser(String userUuid);
 }

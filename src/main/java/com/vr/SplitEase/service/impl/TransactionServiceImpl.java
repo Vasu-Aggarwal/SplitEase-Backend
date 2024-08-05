@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 @Slf4j
 public class TransactionServiceImpl implements TransactionService {
@@ -471,6 +473,14 @@ public class TransactionServiceImpl implements TransactionService {
             }
             return transactionResponses;
 //        }
+    }
+
+    @Override
+    public List<GetTransactionByGroupResponse> getTransactionsByUser(String userUuid) {
+        User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        List<Transaction> transactions = userLedgerRepository.findTransactionsByUser(user).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<GetTransactionByGroupResponse> getTransactionByGroupResponses = transactions.stream().map(transaction -> modelMapper.map(transaction, GetTransactionByGroupResponse.class)).collect(toList());
+        return getTransactionByGroupResponses;
     }
 
     @Transactional

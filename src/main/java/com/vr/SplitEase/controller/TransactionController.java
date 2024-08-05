@@ -69,4 +69,10 @@ public class TransactionController {
         List<GetTransactionByGroupResponse> addTransactionResponses = transactionService.getTransactionsByGroupId(groupId);
         return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
     }
+
+    @GetMapping("/getTransactionsByUser/{userUuid}")
+    public ResponseEntity<List<GetTransactionByGroupResponse>> getTransactionsByUser(@PathVariable String userUuid){
+        List<GetTransactionByGroupResponse> addTransactionResponses = transactionService.getTransactionsByUser(userUuid);
+        return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
+    }
 }
