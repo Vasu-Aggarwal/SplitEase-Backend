@@ -39,14 +39,27 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<AddCategoryResponse> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
         List<SubCategory> subCategories = subCategoryRepository.findAll();
-        List<AddCategoryResponse> categoryResponseList = subCategories.stream().map(subCategory -> {
-                    AddCategoryResponse categoryResponse = modelMapper.map(subCategory, AddCategoryResponse.class);
-                    categoryResponse.setCategory(subCategory.getCategory().getName());
-                    categoryResponse.setCategoryId(subCategory.getCategory().getCategoryId());
-                    return categoryResponse;
-                }
-        ).sorted(Comparator.comparing(AddCategoryResponse::getCategory)).toList();
+
+        List<AddCategoryResponse> categoryResponseList = categories.stream().map(category -> {
+            AddCategoryResponse addCategoryResponse = new AddCategoryResponse();
+            addCategoryResponse.setCategory(category.getName());
+            addCategoryResponse.setCategoryId(category.getCategoryId());
+            //Get the list of sub categories
+            List<SubCategory> subCategories1 = subCategoryRepository.findByCategory(category).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            List<AddCategoryResponse.SubCategoryResponse> subCategoryResponses = subCategories1.stream().map(subCategory -> modelMapper.map(subCategory, AddCategoryResponse.SubCategoryResponse.class)).toList();
+            addCategoryResponse.setSubcategories(subCategoryResponses);
+            return addCategoryResponse;
+        }).toList();
+
+//        List<AddCategoryResponse> categoryResponseList = subCategories.stream().map(subCategory -> {
+//                    AddCategoryResponse categoryResponse = modelMapper.map(subCategory, AddCategoryResponse.class);
+//                    categoryResponse.setCategory(subCategory.getCategory().getName());
+//                    categoryResponse.setCategoryId(subCategory.getCategory().getCategoryId());
+//                    return categoryResponse;
+//                }
+//        ).sorted(Comparator.comparing(AddCategoryResponse::getCategory)).toList();
         return categoryResponseList;
     }
 }
