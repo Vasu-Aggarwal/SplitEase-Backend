@@ -12,6 +12,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
@@ -32,5 +35,18 @@ public class CategoryServiceImpl implements CategoryService {
         subCategory.setCategory(category);
         subCategoryRepository.save(subCategory);
         return modelMapper.map(subCategory, AddCategoryResponse.class);
+    }
+
+    @Override
+    public List<AddCategoryResponse> getAllCategories() {
+        List<SubCategory> subCategories = subCategoryRepository.findAll();
+        List<AddCategoryResponse> categoryResponseList = subCategories.stream().map(subCategory -> {
+                    AddCategoryResponse categoryResponse = modelMapper.map(subCategory, AddCategoryResponse.class);
+                    categoryResponse.setCategory(subCategory.getCategory().getName());
+                    categoryResponse.setCategoryId(subCategory.getCategory().getCategoryId());
+                    return categoryResponse;
+                }
+        ).sorted(Comparator.comparing(AddCategoryResponse::getCategory)).toList();
+        return categoryResponseList;
     }
 }

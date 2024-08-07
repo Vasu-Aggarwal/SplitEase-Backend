@@ -10,7 +10,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AddCategoryResponse {
-    private String subCategoryId;
+    private Integer subCategoryId;
     private String name;
     private String imageUrl;
+    private String category;
+    private Integer categoryId;
 }
