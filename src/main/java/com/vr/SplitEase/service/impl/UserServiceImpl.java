@@ -57,10 +57,24 @@ public class UserServiceImpl implements UserService {
         } else {
             //Create new user
             //set role
-            user = modelMapper.map(createUserRequest, User.class);
-            user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
-            Role role = this.roleRepository.findById(2).get();
-            user.getRoles().add(role);
+            if (!createUserRequest.getEmail().isBlank() || !createUserRequest.getMobile().isBlank()){
+                user = modelMapper.map(createUserRequest, User.class);
+                if (createUserRequest.getMobile().isBlank()){
+                    user.setMobile(null);
+                } else{
+                    user.setEmail(null);
+                }
+                if (createUserRequest.getPassword().isBlank()){
+                    //set the default password
+                    user.setPassword(passwordEncoder.encode(AppConstants.DEFAULT_PASSWORD.getValue()));
+                } else {
+                    user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
+                }
+                Role role = this.roleRepository.findById(2).get();
+                user.getRoles().add(role);
+            } else {
+                throw new BadApiRequestException("Email or Mobile should not be empty");
+            }
         }
         userRepository.save(user);
         return modelMapper.map(user, CreateUserResponse.class);

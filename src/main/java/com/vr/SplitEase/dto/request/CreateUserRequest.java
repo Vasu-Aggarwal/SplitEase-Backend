@@ -21,14 +21,7 @@ public class CreateUserRequest {
     @NotBlank(message = "Name cannot be empty")
     private String name;
 
-    @NotNull(message = "Password cannot be null")
-    @NotBlank(message = "Password cannot be empty")
     private String password;
-
-    @Email(message = "Please enter valid email")
     private String email;
-
-    @NotBlank(message = "Mobile number cannot be empty")
-    @NotNull(message = "Mobile number cannot be null")
     private String mobile;
 }

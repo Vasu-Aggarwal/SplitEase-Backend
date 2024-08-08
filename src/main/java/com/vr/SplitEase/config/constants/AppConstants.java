@@ -8,7 +8,8 @@ public enum AppConstants {
     ALL_GROUPS("allGroups"),
     GROUPS_THAT_OWE_YOU("groupsThatOweYou"),
     GROUPS_YOU_OWE("groupsYouOwe"),
-    OUTSTANDING_BALANCE("outstandingBalance");
+    OUTSTANDING_BALANCE("outstandingBalance"),
+    DEFAULT_PASSWORD("SPE@123456");
 
     private final String value;
 
