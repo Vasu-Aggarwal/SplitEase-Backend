@@ -13,4 +13,5 @@ public class GetUserByUuidResponse {
     private String name;
     private String userUuid;
     private String email;
+    private String mobile;
 }

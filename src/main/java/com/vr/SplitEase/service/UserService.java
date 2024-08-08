@@ -27,5 +27,5 @@ public interface UserService {
 
     List<FriendsListResponse> userFriendsList(String userUuid);
 
-    GetUserByUuidResponse isUserExists(String userData);
+    List<GetUserByUuidResponse> isUserExists(String userData);
 }
