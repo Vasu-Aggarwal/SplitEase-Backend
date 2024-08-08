@@ -2,6 +2,7 @@ package com.vr.SplitEase.controller;
 
 import com.vr.SplitEase.dto.request.AddCategoryRequest;
 import com.vr.SplitEase.dto.response.AddCategoryResponse;
+import com.vr.SplitEase.dto.response.GetCategoryResponse;
 import com.vr.SplitEase.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,8 @@ public class CategoryController {
     }
 
     @GetMapping("/getCategories")
-    public ResponseEntity<List<AddCategoryResponse>> getCategories(){
-        List<AddCategoryResponse> categoryResponseList = categoryService.getAllCategories();
+    public ResponseEntity<List<GetCategoryResponse>> getCategories(){
+        List<GetCategoryResponse> categoryResponseList = categoryService.getAllCategories();
         return new ResponseEntity<>(categoryResponseList, HttpStatus.OK);
     }
 }

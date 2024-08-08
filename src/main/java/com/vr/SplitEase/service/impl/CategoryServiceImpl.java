@@ -2,6 +2,7 @@ package com.vr.SplitEase.service.impl;
 
 import com.vr.SplitEase.dto.request.AddCategoryRequest;
 import com.vr.SplitEase.dto.response.AddCategoryResponse;
+import com.vr.SplitEase.dto.response.GetCategoryResponse;
 import com.vr.SplitEase.entity.Category;
 import com.vr.SplitEase.entity.SubCategory;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
@@ -38,17 +39,17 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<AddCategoryResponse> getAllCategories() {
+    public List<GetCategoryResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         List<SubCategory> subCategories = subCategoryRepository.findAll();
 
-        List<AddCategoryResponse> categoryResponseList = categories.stream().map(category -> {
-            AddCategoryResponse addCategoryResponse = new AddCategoryResponse();
+        List<GetCategoryResponse> categoryResponseList = categories.stream().map(category -> {
+            GetCategoryResponse addCategoryResponse = new GetCategoryResponse();
             addCategoryResponse.setCategory(category.getName());
             addCategoryResponse.setCategoryId(category.getCategoryId());
             //Get the list of sub categories
             List<SubCategory> subCategories1 = subCategoryRepository.findByCategory(category).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-            List<AddCategoryResponse.SubCategoryResponse> subCategoryResponses = subCategories1.stream().map(subCategory -> modelMapper.map(subCategory, AddCategoryResponse.SubCategoryResponse.class)).toList();
+            List<GetCategoryResponse.SubCategoryResponse> subCategoryResponses = subCategories1.stream().map(subCategory -> modelMapper.map(subCategory, GetCategoryResponse.SubCategoryResponse.class)).toList();
             addCategoryResponse.setSubcategories(subCategoryResponses);
             return addCategoryResponse;
         }).toList();
