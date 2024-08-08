@@ -157,4 +157,11 @@ public class UserServiceImpl implements UserService {
 
         return null;
     }
+
+    @Override
+    public GetUserByUuidResponse isUserExists(String userData) {
+        User user = userRepository.findByNameOrEmailOrMobileIgnoreCase(userData).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        GetUserByUuidResponse response = modelMapper.map(user, GetUserByUuidResponse.class);
+        return response;
+    }
 }

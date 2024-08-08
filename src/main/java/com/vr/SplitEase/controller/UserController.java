@@ -53,4 +53,10 @@ public class UserController {
         return ResponseEntity.ok(friendsListResponses);
     }
 
+    @GetMapping("/isUserExists")
+    public ResponseEntity<GetUserByUuidResponse> isUserExists(@RequestParam(name = "entityVal") String userData){
+        GetUserByUuidResponse getUserByUuidResponse = userService.isUserExists(userData);
+        return ResponseEntity.ok(getUserByUuidResponse);
+    }
+
 }

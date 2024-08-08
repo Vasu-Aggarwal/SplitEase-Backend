@@ -26,4 +26,6 @@ public interface UserService {
     GetTotalNetBalance getTotalNetBalanceByUserUuid(String userUuid, String searchVal);
 
     List<FriendsListResponse> userFriendsList(String userUuid);
+
+    GetUserByUuidResponse isUserExists(String userData);
 }
