@@ -1,0 +1,29 @@
+spring:
+
+  #    File Configuration
+  #  servlet:
+  #    multipart:
+  #      max-file-size: 3MB
+  #      max-request-size: 3MB
+
+  jpa:
+    #    show-sql: true
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/splitease?createDatabaseIfNotExist=true
+    username: root
+    password: admin
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  #    properties:
+  #      hibernate:
+  #        format_sql: true
+
+
+  # swagger-ui custom path
+  #springdoc:
+  #  swagger-ui:
+  #    path: /swagger-ui.html

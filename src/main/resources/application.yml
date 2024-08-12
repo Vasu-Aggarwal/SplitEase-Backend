@@ -2,8 +2,8 @@ server:
   port: 9090
 
 spring:
-#  profiles:
-#    active: dev
+  profiles:
+    active: prod
   application:
     name: "SplitEase"
 
@@ -24,26 +24,10 @@ spring:
           starttls:
             enable: true
 
-  #    File Configuration
-#  servlet:
-#    multipart:
-#      max-file-size: 3MB
-#      max-request-size: 3MB
-
   jpa:
-#    show-sql: true
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
-  #    properties:
-  #      hibernate:
-  #        format_sql: true
-
-  datasource:
-    url: jdbc:mysql://localhost:3306/splitease?createDatabaseIfNotExist=true
-    username: root
-    password: admin
-    driver-class-name: com.mysql.cj.jdbc.Driver
 
 logging:
   level:
@@ -53,8 +37,3 @@ logging:
       hibernate:
         SQL: DEBUG
         type: TRACE
-
-# swagger-ui custom path
-#springdoc:
-#  swagger-ui:
-#    path: /swagger-ui.html
