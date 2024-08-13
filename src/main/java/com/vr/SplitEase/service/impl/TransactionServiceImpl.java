@@ -394,8 +394,11 @@ public class TransactionServiceImpl implements TransactionService {
         settleUpTransactionResponse.setTransactionId(transaction.getTransactionId());
         settleUpTransactionResponse.setAmount(settleUpTransactionRequest.getAmount());
         settleUpTransactionResponse.setPayer(payer.getUserUuid());
+        settleUpTransactionResponse.setPayerName(payer.getName());
+        settleUpTransactionResponse.setReceiverName(receiver.getName());
         settleUpTransactionResponse.setReceiver(receiver.getUserUuid());
         settleUpTransactionResponse.setGroupId(settleUpTransactionRequest.getGroup());
+        settleUpTransactionResponse.setCreatedOn(transaction.getCreatedOn());
         entityManager.flush();
         entityManager.clear();
         transactionRepository.calculateNetBalance(settleUpTransactionRequest.getGroup());
@@ -448,6 +451,7 @@ public class TransactionServiceImpl implements TransactionService {
         List<UserLedger> userLedgers = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
 
         GetTransactionByIdResponse getTransactionByIdResponse = modelMapper.map(transaction, GetTransactionByIdResponse.class);
+        getTransactionByIdResponse.setPayerName(transaction.getUser().getName());
 
         List<GetTransactionByIdResponse.UserLedgerDetails> userLedgerDetails = userLedgers.stream().map(userLedger -> GetTransactionByIdResponse.UserLedgerDetails.builder()
                 .amount(userLedger.getAmount())
@@ -476,8 +480,33 @@ public class TransactionServiceImpl implements TransactionService {
                                         .owedOrLent(userLedger1.getOwedOrLent())
                                         .build())
                                 .orElse(null);
-                        GetTransactionByGroupResponse getTransactionByGroupResponses = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
-                        getTransactionByGroupResponses.setLoggedInUserTransaction(loggedInUserTransaction);
+
+                        GetTransactionByGroupResponse getTransactionByGroupResponses = new GetTransactionByGroupResponse();
+                        if (transaction.getDescription() == null && transaction.getCategory() == null){
+                            //This transaction is settle up transaction
+                            List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
+
+                            SettleUpTransactionResponse settleUpTransactionResponse = modelMapper.map(transaction, SettleUpTransactionResponse.class);
+
+                            for (UserLedger userLedger : userLedgerList) {
+                                if (userLedger.getOwedOrLent().equalsIgnoreCase("OWED")) {
+                                    settleUpTransactionResponse.setReceiver(userLedger.getUser().getUserUuid());
+                                    settleUpTransactionResponse.setReceiverName(userLedger.getUser().getName());
+                                } else {
+                                    settleUpTransactionResponse.setPayer(userLedger.getUser().getUserUuid());
+                                    settleUpTransactionResponse.setPayerName(userLedger.getUser().getName());
+                                }
+                            }
+
+                            getTransactionByGroupResponses.setCreatedOn(settleUpTransactionResponse.getCreatedOn());
+                            getTransactionByGroupResponses.setSettle(settleUpTransactionResponse);
+                        } else {
+                            //other transactions
+                            getTransactionByGroupResponses = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
+                            getTransactionByGroupResponses.setPayerName(transaction.getUser().getName());
+                            getTransactionByGroupResponses.setLoggedInUserTransaction(loggedInUserTransaction);
+
+                        }
                         return getTransactionByGroupResponses;
                     }
             ).toList());

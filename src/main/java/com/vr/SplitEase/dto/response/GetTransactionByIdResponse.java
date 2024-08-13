@@ -20,6 +20,7 @@ public class GetTransactionByIdResponse {
     private SplitBy splitBy;
     private Integer groupId;
     private String userUuid;
+    private String payerName;
     private AddCategoryResponse category;
     private List<UserLedgerDetails> userLedgerDetails = new ArrayList<>();
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
