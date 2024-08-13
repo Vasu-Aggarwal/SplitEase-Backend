@@ -1,6 +1,11 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/splitease?createDatabaseIfNotExist=true
-    username: root
-    password: admin
+    url: jdbc:mysql://splitease.cp26igqka5t4.eu-north-1.rds.amazonaws.com:3306?createDatabaseIfNotExist=true
+    username: vasu0402
+    password: vasu0402
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update

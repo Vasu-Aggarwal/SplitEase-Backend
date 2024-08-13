@@ -104,6 +104,8 @@ public class TransactionServiceImpl implements TransactionService {
 
             //Now add the split money to user ledger
             for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
+                if (entry.getKey().isBlank()) //There was a case where empty email and 0.0 amount was passed, in that case skip
+                    continue;
                 String userEmail = entry.getKey();
                 Double userAmount = entry.getValue();
                 UserLedger userLedger = new UserLedger();
