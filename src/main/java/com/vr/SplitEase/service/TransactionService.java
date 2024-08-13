@@ -15,7 +15,7 @@ public interface TransactionService {
     CalculatedDebtResponse calculateDebt(Integer groupId);
     SettleUpTransactionResponse settleUpTransaction(SettleUpTransactionRequest settleUpTransactionRequest);
     DeleteResponse deleteTransaction(Integer transactionId);
-    AddTransactionResponse getTransactionById(Integer transactionId);
+    GetTransactionByIdResponse getTransactionById(Integer transactionId);
     List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId);
     List<GetTransactionByGroupResponse> getTransactionsByUser(String userUuid);
 }

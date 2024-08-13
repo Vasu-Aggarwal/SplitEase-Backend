@@ -59,9 +59,9 @@ public class TransactionController {
     }
 
     @GetMapping("/getTransactionById/{transactionId}")
-    public ResponseEntity<AddTransactionResponse> getTransactionById(@PathVariable Integer transactionId){
-        AddTransactionResponse addTransactionResponse = transactionService.getTransactionById(transactionId);
-        return new ResponseEntity<>(addTransactionResponse, HttpStatus.OK);
+    public ResponseEntity<GetTransactionByIdResponse> getTransactionById(@PathVariable Integer transactionId){
+        GetTransactionByIdResponse getTransactionByIdResponse = transactionService.getTransactionById(transactionId);
+        return new ResponseEntity<>(getTransactionByIdResponse, HttpStatus.OK);
     }
 
     @GetMapping("/getTransactionsByGroup/{groupId}")

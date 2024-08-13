@@ -441,10 +441,23 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public AddTransactionResponse getTransactionById(Integer transactionId) {
+    public GetTransactionByIdResponse getTransactionById(Integer transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
-        AddTransactionResponse addTransactionResponse = modelMapper.map(transaction, AddTransactionResponse.class);
-        return addTransactionResponse;
+
+        //find the user ledger details according to the transaction
+        List<UserLedger> userLedgers = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
+
+        GetTransactionByIdResponse getTransactionByIdResponse = modelMapper.map(transaction, GetTransactionByIdResponse.class);
+
+        List<GetTransactionByIdResponse.UserLedgerDetails> userLedgerDetails = userLedgers.stream().map(userLedger -> GetTransactionByIdResponse.UserLedgerDetails.builder()
+                .amount(userLedger.getAmount())
+                .name(userLedger.getUser().getName())
+                .userUuid(userLedger.getUser().getUserUuid())
+                .owedOrLent(userLedger.getOwedOrLent())
+                .build()).toList();
+        getTransactionByIdResponse.setUserLedgerDetails(userLedgerDetails);
+
+        return getTransactionByIdResponse;
     }
 
     @Override
