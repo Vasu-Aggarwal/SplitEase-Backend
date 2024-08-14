@@ -474,42 +474,31 @@ public class TransactionServiceImpl implements TransactionService {
             Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
             List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
-                        LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
-                                        .userUuid(userLedger1.getUser().getUserUuid())
-                                        .amount(userLedger1.getAmount())
-                                        .owedOrLent(userLedger1.getOwedOrLent())
-                                        .build())
-                                .orElse(null);
+                LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
+                                .userUuid(userLedger1.getUser().getUserUuid())
+                                .amount(userLedger1.getAmount())
+                                .owedOrLent(userLedger1.getOwedOrLent())
+                                .build())
+                        .orElse(null);
 
-                        GetTransactionByGroupResponse getTransactionByGroupResponses = new GetTransactionByGroupResponse();
-                        if (transaction.getDescription() == null && transaction.getCategory() == null){
-                            //This transaction is settle up transaction
-                            List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
+                GetTransactionByGroupResponse getTransactionByGroupResponses = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
 
-                            SettleUpTransactionResponse settleUpTransactionResponse = modelMapper.map(transaction, SettleUpTransactionResponse.class);
+                if (transaction.getDescription() == null && transaction.getCategory() == null) {
+                    //This transaction is settle up transaction
+                    List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
 
-                            for (UserLedger userLedger : userLedgerList) {
-                                if (userLedger.getOwedOrLent().equalsIgnoreCase("OWED")) {
-                                    settleUpTransactionResponse.setReceiver(userLedger.getUser().getUserUuid());
-                                    settleUpTransactionResponse.setReceiverName(userLedger.getUser().getName());
-                                } else {
-                                    settleUpTransactionResponse.setPayer(userLedger.getUser().getUserUuid());
-                                    settleUpTransactionResponse.setPayerName(userLedger.getUser().getName());
-                                }
-                            }
-
-                            getTransactionByGroupResponses.setCreatedOn(settleUpTransactionResponse.getCreatedOn());
-                            getTransactionByGroupResponses.setSettle(settleUpTransactionResponse);
-                        } else {
-                            //other transactions
-                            getTransactionByGroupResponses = modelMapper.map(transaction, GetTransactionByGroupResponse.class);
-                            getTransactionByGroupResponses.setPayerName(transaction.getUser().getName());
-                            getTransactionByGroupResponses.setLoggedInUserTransaction(loggedInUserTransaction);
-
+                    for (UserLedger userLedger : userLedgerList) {
+                        if (userLedger.getOwedOrLent().equalsIgnoreCase("OWED")) {
+                            getTransactionByGroupResponses.setReceiver(userLedger.getUser().getUserUuid());
+                            getTransactionByGroupResponses.setReceiverName(userLedger.getUser().getName());
                         }
-                        return getTransactionByGroupResponses;
                     }
-            ).toList());
+                }
+
+                getTransactionByGroupResponses.setPayerName(transaction.getUser().getName());
+                getTransactionByGroupResponses.setLoggedInUserTransaction(loggedInUserTransaction);
+                return getTransactionByGroupResponses;
+            }).toList());
             // Sort transactionResponses by createdOn in descending order (latest date first)
             transactionResponses.sort(Comparator.comparing(GetTransactionByGroupResponse::getCreatedOn).reversed());
             if (transactionResponses != null){

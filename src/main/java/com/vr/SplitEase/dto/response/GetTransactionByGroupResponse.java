@@ -19,9 +19,10 @@ public class GetTransactionByGroupResponse {
     private Integer groupId;
     private String userUuid;
     private String payerName;
+    private String receiver;
+    private String receiverName;
     private AddCategoryResponse category;
 //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdOn;
     private LoggedInUserTransaction loggedInUserTransaction;
-    private SettleUpTransactionResponse settle;
 }
