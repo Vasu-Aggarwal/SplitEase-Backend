@@ -5,5 +5,7 @@ import lombok.Getter;
 @Getter
 public enum SplitBy {
     EQUAL,
-    UNEQUAL;
+    UNEQUAL,
+    SHARE,
+    PERCENTAGE
 }
