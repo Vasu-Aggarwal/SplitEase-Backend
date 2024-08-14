@@ -84,25 +84,26 @@ public class TransactionServiceImpl implements TransactionService {
             // If percentage then, calculate the amount for each user and assign to that
             if (addTransactionRequest.getSplitBy().equals(SplitBy.PERCENTAGE)){
                 // Get the map containing user IDs and their corresponding percentages
-                Map<String, Double> updateTransactionAmount = addTransactionRequest.getUsersInvolved();
-
                 // Get the total amount from the request
                 double totalAmount = addTransactionRequest.getAmount();
 
-                // Iterate over the map and update the amounts
-                for (Map.Entry<String, Double> entry : updateTransactionAmount.entrySet()) {
+                // Create a new map to store the calculated amounts
+                Map<String, Double> calculatedAmounts = new HashMap<>();
+
+                // Iterate over the map and calculate the amounts
+                for (Map.Entry<String, Double> entry : addTransactionRequest.getUsersInvolved().entrySet()) {
                     String userId = entry.getKey();
                     Double percentage = entry.getValue();
 
                     // Calculate the amount for this user based on the percentage
                     double calculatedAmount = (percentage / 100) * totalAmount;
 
-                    // Update the map with the calculated amount
-                    updateTransactionAmount.put(userId, calculatedAmount);
+                    // Store the calculated amount in the new map
+                    calculatedAmounts.put(userId, calculatedAmount);
                 }
 
-                // If you need to update the request with the new map
-                addTransactionRequest.setUsersInvolved(updateTransactionAmount);
+                // Update the original map with the calculated amounts
+                addTransactionRequest.setUsersInvolved(calculatedAmounts);
             }
 
             //check the total amount set to all the users must be equal to the transaction amount
