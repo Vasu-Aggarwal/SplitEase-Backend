@@ -82,6 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
 
             //check if transaction is split using PERCENTAGE.
             // If percentage then, calculate the amount for each user and assign to that
+            //Also add the condition to check if the sum of percentages must be equal to 100
             if (addTransactionRequest.getSplitBy().equals(SplitBy.PERCENTAGE)){
                 // Get the map containing user IDs and their corresponding percentages
                 // Get the total amount from the request
