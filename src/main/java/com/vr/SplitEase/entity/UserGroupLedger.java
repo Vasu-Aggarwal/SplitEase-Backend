@@ -41,6 +41,5 @@ public class UserGroupLedger{
     private Double totalOwed;
     @Column(name = "total_lent")
     private Double totalLent;
-    @Enumerated(EnumType.STRING)
-    private GroupStatus status;
+    private Integer status;
 }

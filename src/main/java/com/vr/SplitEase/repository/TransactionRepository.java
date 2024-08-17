@@ -18,5 +18,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Procedure(procedureName = "ResetEqualBalances")
     void resetEqualBalances(@Param("groupId") Integer groupId);
 
-    Optional<List<Transaction>> findByGroupAndStatus(Group group, TransactionStatus status);
+    Optional<List<Transaction>> findByGroupAndStatus(Group group, Integer status);
 }

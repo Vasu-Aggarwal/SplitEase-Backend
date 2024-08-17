@@ -70,7 +70,7 @@ public class GroupServiceImpl implements GroupService {
         if (groupId != null){
             group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             //Verify group is in active state
-            if (group.getStatus() == GroupStatus.ACTIVE){
+            if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
                 if (image != null && !image.isEmpty()) {
                     Map imageResponse = cloudinaryImageService.uploadImage(image);
                     group.setImageUrl(imageResponse.get("url").toString());
@@ -81,7 +81,7 @@ public class GroupServiceImpl implements GroupService {
             }
         } else { //Create a new group
             group.setName(name);
-            group.setStatus(GroupStatus.ACTIVE);
+            group.setStatus(GroupStatus.ACTIVE.getStatus());
             group.setTotalAmount(0.0);
             group.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
             if (image != null && !image.isEmpty()) {
@@ -93,7 +93,7 @@ public class GroupServiceImpl implements GroupService {
             UserGroupLedger userGroupLedger = new UserGroupLedger();
             userGroupLedger.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
             userGroupLedger.setGroup(group);
-            userGroupLedger.setStatus(GroupStatus.ACTIVE);
+            userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
             userGroupLedger.setTotalOwed(0.00);
             userGroupLedger.setTotalLent(0.00);
             userGroupLedger.setNetBalance(0.00);
@@ -113,7 +113,7 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findById(addUserToGroupRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         //Verify group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             //check whether no user present in the list is already present with same group
             List<String> conflictingUsers = new ArrayList<>();
             for (User user : users) {
@@ -130,7 +130,7 @@ public class GroupServiceImpl implements GroupService {
                     UserGroupLedger userGroupLedger = new UserGroupLedger();
                     userGroupLedger.setUser(user);
                     userGroupLedger.setGroup(group);
-                    userGroupLedger.setStatus(GroupStatus.ACTIVE);
+                    userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
                     userGroupLedger.setTotalLent(0.00);
                     userGroupLedger.setTotalOwed(0.00);
                     userGroupLedger.setNetBalance(0.00);
@@ -159,9 +159,9 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         //Verify group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             //Find all transactions of a particular group
-            List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
             Workbook workbook = new XSSFWorkbook();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
@@ -272,11 +272,11 @@ public class GroupServiceImpl implements GroupService {
         UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("No user found in the group"));
 
         //Verify group and user group ledger for that particular user is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE ){
-            if (userGroupLedger.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
+            if (userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()){
                 //remove the user only if his net balance is 0
                 if (userGroupLedger.getNetBalance() == 0.0){
-                    userGroupLedger.setStatus(GroupStatus.DELETED); //delete the user from the group
+                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
                     userGroupLedgerRepository.save(userGroupLedger);
                 } else {
                     //When the net balance is not 0 then don't delete the user from the group
@@ -296,7 +296,7 @@ public class GroupServiceImpl implements GroupService {
     public List<CreateUserResponse> getGroupMembers(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         //Verify group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             List<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
                     modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
             ).collect(Collectors.toList());
@@ -310,7 +310,7 @@ public class GroupServiceImpl implements GroupService {
     public List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         //Verify group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE) {
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()) {
             List<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
                             modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
                     ).sorted(Comparator.comparing(GetGroupMembersV2Response::getName))
@@ -327,7 +327,7 @@ public class GroupServiceImpl implements GroupService {
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //Get the list of groups the user is part of
-        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatus(user, GroupStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatus(user, GroupStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         List<GetGroupsByUserResponse> groups = new ArrayList<>();
         if (searchBy.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
             groups = userGroupLedgers.stream().map(userGroupLedger -> {
@@ -361,7 +361,7 @@ public class GroupServiceImpl implements GroupService {
     public GroupSummaryResponse getGroupSpendingSummary(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new ResourceNotFoundException("Group not found"));
 
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             return GroupSummaryResponse.builder()
                     .groupId(groupId)
                     .groupName(group.getName())
@@ -377,7 +377,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public AddGroupResponse getGroupInfo(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             AddGroupResponse addGroupResponse = modelMapper.map(group, AddGroupResponse.class);
             return addGroupResponse;
         } else {
@@ -392,16 +392,16 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         //Verify if the group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             //Verify if userUuid trying to delete is the one who created
             if (Objects.equals(group.getUser().getUserUuid(), userUuid)){
-                group.setStatus(GroupStatus.DELETED);
+                group.setStatus(GroupStatus.DELETED.getStatus());
                 List<UserGroupLedger> userGroupLedgers = new ArrayList<>(group.getUserGroups());
                 for (UserGroupLedger userGroupLedger : userGroupLedgers){
 
                     //if user group ledger balance is not 0 then group cannot be deleted
                     if (userGroupLedger.getNetBalance() == 0.0){
-                        userGroupLedger.setStatus(GroupStatus.DELETED);
+                        userGroupLedger.setStatus(GroupStatus.DELETED.getStatus());
                         userGroupLedgerRepository.save(userGroupLedger);
                     } else {
                         throw new BadApiRequestException("Group cannot be deleted as there are some balance left");

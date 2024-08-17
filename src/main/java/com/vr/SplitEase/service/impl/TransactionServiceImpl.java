@@ -71,14 +71,14 @@ public class TransactionServiceImpl implements TransactionService {
             User user = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
             //find the group
             Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-            if (group.getStatus() == GroupStatus.ACTIVE){
+            if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
                 //find the category
                 SubCategory category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                 Transaction transaction = modelMapper.map(addTransactionRequest, Transaction.class);
                 transaction.setUser(user);
                 transaction.setGroup(group);
                 transaction.setCategory(category);
-                transaction.setStatus(TransactionStatus.ACTIVE); //set the status of transaction as active
+                transaction.setStatus(TransactionStatus.ACTIVE.getStatus()); //set the status of transaction as active
                 transaction = transactionRepository.save(transaction);
 
                 //check if transaction is split using PERCENTAGE.
@@ -145,7 +145,7 @@ public class TransactionServiceImpl implements TransactionService {
                         userLedger.setTransaction(transaction);
                         userLedger.setUser(involvedUser);
                         userLedger.setLentFrom(user);
-                        userLedger.setIsActive(LedgerStatus.ACTIVE);
+                        userLedger.setIsActive(LedgerStatus.ACTIVE.getStatus());
                         userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
                         userLedger.setAmount(userAmount);
 
@@ -163,7 +163,7 @@ public class TransactionServiceImpl implements TransactionService {
                         userLedger.setTransaction(transaction);
                         userLedger.setUser(involvedUser);
                         userLedger.setLentFrom(null);
-                        userLedger.setIsActive(LedgerStatus.ACTIVE);
+                        userLedger.setIsActive(LedgerStatus.ACTIVE.getStatus());
                         userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
                         userLedger.setAmount(addTransactionRequest.getAmount() - userAmount);
 
@@ -209,7 +209,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(addTransactionRequest.getTransactionId()).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         //Verify both transaction and group is in active state
-        if (transaction.getStatus() == TransactionStatus.ACTIVE && transaction.getGroup().getStatus() == GroupStatus.ACTIVE){
+        if (transaction.getStatus() == TransactionStatus.ACTIVE.getStatus() && transaction.getGroup().getStatus() == GroupStatus.ACTIVE.getStatus()){
             // Create a separate list to avoid ConcurrentModificationException
             List<UserLedger> userLedgers = new ArrayList<>(transaction.getUserLedger());
 
@@ -285,7 +285,7 @@ public class TransactionServiceImpl implements TransactionService {
                     userLedger.setTransaction(transaction);
                     userLedger.setUser(involvedUser);
                     userLedger.setLentFrom(user);
-                    userLedger.setIsActive(LedgerStatus.ACTIVE);
+                    userLedger.setIsActive(LedgerStatus.ACTIVE.getStatus());
                     userLedger.setOwedOrLent(LentOwedStatus.OWED.toString());
                     userLedger.setAmount(userAmount);
 
@@ -303,7 +303,7 @@ public class TransactionServiceImpl implements TransactionService {
                     userLedger.setTransaction(transaction);
                     userLedger.setUser(involvedUser);
                     userLedger.setLentFrom(null);
-                    userLedger.setIsActive(LedgerStatus.ACTIVE);
+                    userLedger.setIsActive(LedgerStatus.ACTIVE.getStatus());
                     userLedger.setOwedOrLent(LentOwedStatus.LENT.toString());
                     userLedger.setAmount(addTransactionRequest.getAmount() - userAmount);
 
@@ -375,12 +375,12 @@ public class TransactionServiceImpl implements TransactionService {
         Group group = groupRepository.findById(settleUpTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         //Verify group is in active state
-        if (group.getStatus() == GroupStatus.ACTIVE){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
             Transaction transaction = modelMapper.map(settleUpTransactionRequest, Transaction.class);
             transaction.setUser(payer);
             transaction.setGroup(group);
             transaction.setCategory(null);
-            transaction.setStatus(TransactionStatus.ACTIVE); //set the status of transaction as active
+            transaction.setStatus(TransactionStatus.ACTIVE.getStatus()); //set the status of transaction as active
             transaction.setSplitBy(SplitBy.EQUAL);
             transaction = transactionRepository.save(transaction);
 
@@ -395,7 +395,7 @@ public class TransactionServiceImpl implements TransactionService {
             userLedgerReceiver.setTransaction(transaction);
             userLedgerReceiver.setUser(receiver);
             userLedgerReceiver.setLentFrom(payer);
-            userLedgerReceiver.setIsActive(LedgerStatus.ACTIVE);
+            userLedgerReceiver.setIsActive(LedgerStatus.ACTIVE.getStatus());
             userLedgerReceiver.setOwedOrLent(LentOwedStatus.OWED.toString());
             userLedgerReceiver.setAmount(settleUpTransactionRequest.getAmount());
 
@@ -405,7 +405,7 @@ public class TransactionServiceImpl implements TransactionService {
             userLedgerPayer.setTransaction(transaction);
             userLedgerPayer.setUser(payer);
             userLedgerPayer.setLentFrom(null);
-            userLedgerPayer.setIsActive(LedgerStatus.ACTIVE);
+            userLedgerPayer.setIsActive(LedgerStatus.ACTIVE.getStatus());
             userLedgerPayer.setOwedOrLent(LentOwedStatus.LENT.toString());
             userLedgerPayer.setAmount(settleUpTransactionRequest.getAmount());
             userLedgerList.add(userLedgerPayer);
@@ -457,7 +457,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         //Verify transaction should be in active status
-        if (transaction.getStatus() == TransactionStatus.ACTIVE){
+        if (transaction.getStatus() == TransactionStatus.ACTIVE.getStatus()){
             User user = transaction.getUser();
             Group group = transaction.getGroup();
 
@@ -480,14 +480,14 @@ public class TransactionServiceImpl implements TransactionService {
                 }
                 userGroupLedgerRepository.save(userGroupLedger);
                 UserLedger userLedgerFound = userLedgerRepository.findById(userLedger.getLedgerId()).orElseThrow(() -> new ResourceNotFoundException("User ledger not found"));
-                userLedgerFound.setIsActive(LedgerStatus.DELETED);  //make the user ledger inactive
+                userLedgerFound.setIsActive(LedgerStatus.DELETED.getStatus());  //make the user ledger inactive
 //                transaction.getUserLedger().remove(userLedger);
             }
             entityManager.flush();
             entityManager.clear();
             transactionRepository.calculateNetBalance(group.getGroupId());
             transactionRepository.resetEqualBalances(group.getGroupId());
-            transaction.setStatus(TransactionStatus.DELETED); // make the transaction as deleted and save
+            transaction.setStatus(TransactionStatus.DELETED.getStatus()); // make the transaction as deleted and save
             transactionRepository.save(transaction);
 //            transactionRepository.delete(transaction);
             return DeleteResponse.builder().message("Transaction deleted successfully").build();
@@ -501,7 +501,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         //Verify transaction should be in active status
-        if (transaction.getStatus() == TransactionStatus.ACTIVE){
+        if (transaction.getStatus() == TransactionStatus.ACTIVE.getStatus()){
             //find the user ledger details according to the transaction
             List<UserLedger> userLedgers = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
 
@@ -531,8 +531,8 @@ public class TransactionServiceImpl implements TransactionService {
 //        } else {
             Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
             //Verify group is in active state
-            if (group.getStatus() == GroupStatus.ACTIVE){
-                List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
+                List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                 List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
                     LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
                                     .userUuid(userLedger1.getUser().getUserUuid())

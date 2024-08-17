@@ -38,7 +38,6 @@ public class UserLedger extends Auditable{
     private User lentFrom;
 
     @Column(name = "is_active")
-    @Enumerated(EnumType.STRING)
-    private LedgerStatus isActive;
+    private Integer isActive;
 
 }

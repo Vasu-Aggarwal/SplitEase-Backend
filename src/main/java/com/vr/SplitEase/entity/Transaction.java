@@ -35,8 +35,7 @@ public class Transaction extends Auditable{
     @JoinColumn(name = "category_id")
     private SubCategory category;
     private String description;
-    @Enumerated(EnumType.STRING)
-    private TransactionStatus status;
+    private Integer status;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<UserLedger> userLedger = new HashSet<>();
