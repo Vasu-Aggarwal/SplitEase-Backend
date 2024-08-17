@@ -12,4 +12,6 @@ import lombok.Setter;
 public class CreateUserResponse {
     private String name;
     private String userUuid;
+    private String email;
+    private String mobile;
 }

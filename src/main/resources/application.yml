@@ -28,12 +28,3 @@ spring:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
-
-logging:
-  level:
-    org:
-      springframework:
-        security: DEBUG
-      hibernate:
-        SQL: DEBUG
-        type: TRACE

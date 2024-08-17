@@ -27,3 +27,14 @@ spring:
   #springdoc:
   #  swagger-ui:
   #    path: /swagger-ui.html
+
+
+logging:
+  level:
+#    root: WARN
+    org:
+      springframework:
+        security: DEBUG
+      hibernate:
+        SQL: DEBUG
+        type: TRACE

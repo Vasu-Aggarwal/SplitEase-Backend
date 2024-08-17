@@ -21,4 +21,5 @@ public interface GroupService {
     List<GetGroupsByUserResponse> getGroupsByUserUuid(String userUuid, String searchBy);
     GroupSummaryResponse getGroupSpendingSummary(Integer groupId);
     AddGroupResponse getGroupInfo(Integer groupId);
+    DeleteResponse deleteGroup(Integer groupId, String userUuid);
 }

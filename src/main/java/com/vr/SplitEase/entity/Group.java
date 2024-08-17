@@ -26,7 +26,8 @@ public class Group extends Auditable{
     private String name;
     @Column(name = "total_amount")
     private Double totalAmount;
-    private Integer status;
+    @Enumerated(EnumType.STRING)
+    private GroupStatus status;
     @Column(name = "image_url")
     private String imageUrl;
 

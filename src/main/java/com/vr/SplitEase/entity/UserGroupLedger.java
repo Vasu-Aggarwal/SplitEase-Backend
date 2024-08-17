@@ -1,5 +1,6 @@
 package com.vr.SplitEase.entity;
 
+import com.vr.SplitEase.config.constants.GroupStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,6 +41,6 @@ public class UserGroupLedger{
     private Double totalOwed;
     @Column(name = "total_lent")
     private Double totalLent;
-    private Integer status;
-
+    @Enumerated(EnumType.STRING)
+    private GroupStatus status;
 }

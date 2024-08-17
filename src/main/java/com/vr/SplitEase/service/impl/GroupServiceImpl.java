@@ -5,6 +5,7 @@ import com.vr.SplitEase.config.EmailScheduler;
 import com.vr.SplitEase.config.constants.AppConstants;
 import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.config.constants.LentOwedStatus;
+import com.vr.SplitEase.config.constants.TransactionStatus;
 import com.vr.SplitEase.dto.request.AddGroupRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
 import com.vr.SplitEase.dto.response.*;
@@ -17,10 +18,12 @@ import com.vr.SplitEase.service.CloudinaryImageService;
 import com.vr.SplitEase.service.EmailService;
 import com.vr.SplitEase.service.GroupService;
 import jakarta.mail.MessagingException;
+import org.apache.coyote.BadRequestException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hibernate.exception.ConstraintViolationException;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,22 +66,22 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public AddGroupResponse addUpdateGroup(String name, Integer groupId, MultipartFile image) {
         Group group = new Group();
+        //Update group
         if (groupId != null){
             group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-            if (image != null && !image.isEmpty()) {
-                Map imageResponse = cloudinaryImageService.uploadImage(image);
-                group.setImageUrl(imageResponse.get("url").toString());
-            }
-            //Allow update of active state groups.
-            if (Objects.equals(group.getStatus(), GroupStatus.ACTIVE.getStatus())){
-                group.setName(name);
+            //Verify group is in active state
+            if (group.getStatus() == GroupStatus.ACTIVE){
+                if (image != null && !image.isEmpty()) {
+                    Map imageResponse = cloudinaryImageService.uploadImage(image);
+                    group.setImageUrl(imageResponse.get("url").toString());
+                }
+                groupRepository.save(group);
             } else {
-                throw new BadApiRequestException("Cannot update inactive group.");
+                throw new BadApiRequestException("This group is no longer in active state");
             }
-            groupRepository.save(group);
-        } else {
+        } else { //Create a new group
             group.setName(name);
-            group.setStatus(GroupStatus.ACTIVE.getStatus());
+            group.setStatus(GroupStatus.ACTIVE);
             group.setTotalAmount(0.0);
             group.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
             if (image != null && !image.isEmpty()) {
@@ -90,7 +93,7 @@ public class GroupServiceImpl implements GroupService {
             UserGroupLedger userGroupLedger = new UserGroupLedger();
             userGroupLedger.setUser(currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("Something went wrong")));
             userGroupLedger.setGroup(group);
-            userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
+            userGroupLedger.setStatus(GroupStatus.ACTIVE);
             userGroupLedger.setTotalOwed(0.00);
             userGroupLedger.setTotalLent(0.00);
             userGroupLedger.setNetBalance(0.00);
@@ -109,40 +112,45 @@ public class GroupServiceImpl implements GroupService {
                 .collect(Collectors.toSet());
         Group group = groupRepository.findById(addUserToGroupRequest.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-        //check whether no user present in the list is already present with same group
-        List<String> conflictingUsers = new ArrayList<>();
-        for (User user : users) {
-            if (userGroupLedgerRepository.existsByUserAndGroup(user, group)) {
-                conflictingUsers.add(user.getEmail());
-            }
-        }
-        if (!conflictingUsers.isEmpty()) {
-            throw new BadApiRequestException("Users already part of the group: " + String.join(", ", conflictingUsers));
-        }
-
-        try {
+        //Verify group is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            //check whether no user present in the list is already present with same group
+            List<String> conflictingUsers = new ArrayList<>();
             for (User user : users) {
-                UserGroupLedger userGroupLedger = new UserGroupLedger();
-                userGroupLedger.setUser(user);
-                userGroupLedger.setGroup(group);
-                userGroupLedger.setStatus(GroupStatus.ACTIVE.getStatus());
-                userGroupLedger.setTotalLent(0.00);
-                userGroupLedger.setTotalOwed(0.00);
-                userGroupLedger.setNetBalance(0.00);
-                userGroupLedgerRepository.save(userGroupLedger);
-                //send the email to the user
-                Map<String, Object> template = new HashMap<>();
-                template.put("recipientName", user.getName());
-                template.put("senderName", sender.getName());
-                template.put("senderEmail", sender.getEmail());
-                template.put("groupName", group.getName());
-                emailScheduler.scheduleEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
+                if (userGroupLedgerRepository.existsByUserAndGroup(user, group)) {
+                    conflictingUsers.add(user.getEmail());
+                }
             }
-        } catch (Exception e){
-            throw new BadApiRequestException(e.getMessage());
+            if (!conflictingUsers.isEmpty()) {
+                throw new BadApiRequestException("Users already part of the group: " + String.join(", ", conflictingUsers));
+            }
+
+            try {
+                for (User user : users) {
+                    UserGroupLedger userGroupLedger = new UserGroupLedger();
+                    userGroupLedger.setUser(user);
+                    userGroupLedger.setGroup(group);
+                    userGroupLedger.setStatus(GroupStatus.ACTIVE);
+                    userGroupLedger.setTotalLent(0.00);
+                    userGroupLedger.setTotalOwed(0.00);
+                    userGroupLedger.setNetBalance(0.00);
+                    userGroupLedgerRepository.save(userGroupLedger);
+                    //send the email to the user
+                    Map<String, Object> template = new HashMap<>();
+                    template.put("recipientName", user.getName());
+                    template.put("senderName", sender.getName());
+                    template.put("senderEmail", sender.getEmail());
+                    template.put("groupName", group.getName());
+                    emailScheduler.scheduleEmail(user.getEmail(), sender.getName() + " added you to the group '"+group.getName()+"' on Splitease", template);
+                }
+            } catch (Exception e){
+                throw new BadApiRequestException(e.getMessage());
+            }
+            AddUserToGroupResponse addUserToGroupResponse = new AddUserToGroupResponse("Users added successfully");
+            return addUserToGroupResponse;
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
         }
-        AddUserToGroupResponse addUserToGroupResponse = new AddUserToGroupResponse("Users added successfully");
-        return addUserToGroupResponse;
     }
 
     @Override
@@ -150,99 +158,104 @@ public class GroupServiceImpl implements GroupService {
         //Find the group
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-        //Find all transactions of a particular group
-        List<Transaction> transactions = transactionRepository.findByGroup(group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        Workbook workbook = new XSSFWorkbook();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            Sheet sheet = workbook.createSheet("Transactions");
+        //Verify group is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            //Find all transactions of a particular group
+            List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            Workbook workbook = new XSSFWorkbook();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+                Sheet sheet = workbook.createSheet("Transactions");
 
-            // Create a cell style for date format
-            CellStyle dateCellStyle = workbook.createCellStyle();
-            CreationHelper createHelper = workbook.getCreationHelper();
-            dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MM-yyyy"));
+                // Create a cell style for date format
+                CellStyle dateCellStyle = workbook.createCellStyle();
+                CreationHelper createHelper = workbook.getCreationHelper();
+                dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MM-yyyy"));
 
 
-            // Create header row
-            Row headerRow = sheet.createRow(0);
-            String[] headers = {"Date", "Description", "Category", "Amount"};
-            int cellIdx = 0;
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(cellIdx++);
-                cell.setCellValue(headers[i]);
-            }
+                // Create header row
+                Row headerRow = sheet.createRow(0);
+                String[] headers = {"Date", "Description", "Category", "Amount"};
+                int cellIdx = 0;
+                for (int i = 0; i < headers.length; i++) {
+                    Cell cell = headerRow.createCell(cellIdx++);
+                    cell.setCellValue(headers[i]);
+                }
 
-            // Add user names to header row dynamically
-            List<User> users = new ArrayList<>();
-            for (Transaction transaction : transactions) {
-                List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
-                for (UserLedger userLedger : userLedgerList) {
-                    User user = userLedger.getUser();
-                    if (!users.contains(user)) {
-                        users.add(user);
+                // Add user names to header row dynamically
+                List<User> users = new ArrayList<>();
+                for (Transaction transaction : transactions) {
+                    List<UserLedger> userLedgerList = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
+                    for (UserLedger userLedger : userLedgerList) {
+                        User user = userLedger.getUser();
+                        if (!users.contains(user)) {
+                            users.add(user);
+                        }
                     }
                 }
-            }
 
-            for (User user : users) {
-                Cell cell = headerRow.createCell(cellIdx++);
-                cell.setCellValue(user.getName());
-            }
-
-            // Populate data rows
-            int rowIdx = 1;
-            for (Transaction transaction : transactions) {
-                Row row = sheet.createRow(rowIdx++);
-                Cell dateCell = row.createCell(0);
-                dateCell.setCellValue(transaction.getCreatedOn());
-                dateCell.setCellStyle(dateCellStyle);
-                row.createCell(1).setCellValue(transaction.getDescription());
-                row.createCell(2).setCellValue(transaction.getCategory().getName());
-                row.createCell(3).setCellValue(transaction.getAmount());
-
-                // Populate user amounts in the row
-                cellIdx = 4; // Starting cell for user amounts
                 for (User user : users) {
-                    double amount = userLedgerRepository.findByTransactionAndUser(transaction, user)
-                            .map(userLedger -> {
-                                double ledgerAmount = userLedger.getAmount();
-                                if (userLedger.getOwedOrLent().equals(LentOwedStatus.LENT.toString())) {
-                                    ledgerAmount = -ledgerAmount; // Prefix with '-' if user has lent money
-                                }
-                                return ledgerAmount;
-                            })
-                            .orElse(0.0);
-                    row.createCell(cellIdx++).setCellValue(amount);
+                    Cell cell = headerRow.createCell(cellIdx++);
+                    cell.setCellValue(user.getName());
                 }
+
+                // Populate data rows
+                int rowIdx = 1;
+                for (Transaction transaction : transactions) {
+                    Row row = sheet.createRow(rowIdx++);
+                    Cell dateCell = row.createCell(0);
+                    dateCell.setCellValue(transaction.getCreatedOn());
+                    dateCell.setCellStyle(dateCellStyle);
+                    row.createCell(1).setCellValue(transaction.getDescription());
+                    row.createCell(2).setCellValue(transaction.getCategory().getName());
+                    row.createCell(3).setCellValue(transaction.getAmount());
+
+                    // Populate user amounts in the row
+                    cellIdx = 4; // Starting cell for user amounts
+                    for (User user : users) {
+                        double amount = userLedgerRepository.findByTransactionAndUser(transaction, user)
+                                .map(userLedger -> {
+                                    double ledgerAmount = userLedger.getAmount();
+                                    if (userLedger.getOwedOrLent().equals(LentOwedStatus.LENT.toString())) {
+                                        ledgerAmount = -ledgerAmount; // Prefix with '-' if user has lent money
+                                    }
+                                    return ledgerAmount;
+                                })
+                                .orElse(0.0);
+                        row.createCell(cellIdx++).setCellValue(amount);
+                    }
+                }
+
+                // Add total net balance row at the end
+                Row totalNetBalanceRow = sheet.createRow(++rowIdx);
+                totalNetBalanceRow.createCell(0).setCellValue("Total Balance");
+
+                // Fetch and set net balance for each user involved in the transaction
+                List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByGroup(group)
+                        .orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
+
+
+                cellIdx = 4;
+                for (User user : users) {
+                    double netBalance = userGroupLedgers.stream()
+                            .filter(ledger -> ledger.getUser().equals(user))
+                            .mapToDouble(UserGroupLedger::getNetBalance)
+                            .sum();
+
+                    Cell cell = totalNetBalanceRow.createCell(cellIdx++);
+                    cell.setCellValue(netBalance);
+                }
+
+                workbook.write(out);
+                return new ByteArrayInputStream(out.toByteArray());
+            } catch (Exception e) {
+                throw new BadApiRequestException(e.getMessage());
+            } finally {
+                workbook.close();
+                out.close();
             }
-
-            // Add total net balance row at the end
-            Row totalNetBalanceRow = sheet.createRow(++rowIdx);
-            totalNetBalanceRow.createCell(0).setCellValue("Total Balance");
-
-            // Fetch and set net balance for each user involved in the transaction
-            List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByGroup(group)
-                    .orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
-
-
-            cellIdx = 4;
-            for (User user : users) {
-                double netBalance = userGroupLedgers.stream()
-                        .filter(ledger -> ledger.getUser().equals(user))
-                        .mapToDouble(UserGroupLedger::getNetBalance)
-                        .sum();
-
-                Cell cell = totalNetBalanceRow.createCell(cellIdx++);
-                cell.setCellValue(netBalance);
-            }
-
-            workbook.write(out);
-            return new ByteArrayInputStream(out.toByteArray());
-        } catch (Exception e) {
-            throw new BadApiRequestException(e.getMessage());
-        } finally {
-            workbook.close();
-            out.close();
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
         }
     }
 
@@ -258,34 +271,54 @@ public class GroupServiceImpl implements GroupService {
         //check if user exists in the group or not
         UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("No user found in the group"));
 
-        //remove the user only if his net balance is 0
-        if (userGroupLedger.getNetBalance() == 0.0){
-            userGroupLedgerRepository.delete(userGroupLedger);
-        } else {
-            //When the net balance is not 0 then don't delete the user from the group
-            throw new CannotRemoveUserFromGroupException("Net balance must be 0", 0, userGroupLedger.getNetBalance());
-        }
+        //Verify group and user group ledger for that particular user is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE ){
+            if (userGroupLedger.getStatus() == GroupStatus.ACTIVE){
+                //remove the user only if his net balance is 0
+                if (userGroupLedger.getNetBalance() == 0.0){
+                    userGroupLedger.setStatus(GroupStatus.DELETED); //delete the user from the group
+                    userGroupLedgerRepository.save(userGroupLedger);
+                } else {
+                    //When the net balance is not 0 then don't delete the user from the group
+                    throw new CannotRemoveUserFromGroupException("Net balance must be 0", 0, userGroupLedger.getNetBalance());
+                }
 
-        return DeleteResponse.builder().message("User removed from the group").build();
+                return DeleteResponse.builder().message("User removed from the group").build();
+            } else {
+                throw new BadApiRequestException("This user is not a part of this group");
+            }
+        } else {
+            throw new BadApiRequestException("This group is no longer in a active state");
+        }
     }
 
     @Override
     public List<CreateUserResponse> getGroupMembers(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        List<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
-                modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
-                ).collect(Collectors.toList());
-        return userList;
+        //Verify group is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            List<CreateUserResponse> userList = group.getUserGroups().stream().map(userGroupLedger ->
+                    modelMapper.map(userGroupLedger.getUser(), CreateUserResponse.class)
+            ).collect(Collectors.toList());
+            return userList;
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
+        }
     }
 
     @Override
     public List<GetGroupMembersV2Response> getGroupMembersV2(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        List<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
-                modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
-        ).sorted(Comparator.comparing(GetGroupMembersV2Response::getName))
-                .collect(Collectors.toList());
-        return userList;
+        //Verify group is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE) {
+            List<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
+                            modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
+                    ).sorted(Comparator.comparing(GetGroupMembersV2Response::getName))
+                    .collect(Collectors.toList());
+            return userList;
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
+        }
     }
 
     @Override
@@ -294,7 +327,7 @@ public class GroupServiceImpl implements GroupService {
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //Get the list of groups the user is part of
-        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatus(user, GroupStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         List<GetGroupsByUserResponse> groups = new ArrayList<>();
         if (searchBy.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
             groups = userGroupLedgers.stream().map(userGroupLedger -> {
@@ -328,19 +361,60 @@ public class GroupServiceImpl implements GroupService {
     public GroupSummaryResponse getGroupSpendingSummary(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(()-> new ResourceNotFoundException("Group not found"));
 
-        return GroupSummaryResponse.builder()
-                .groupId(groupId)
-                .groupName(group.getName())
-                .totalGroupSpending(group.getTotalAmount())
-                .userPaidFor(0.00)
-                .userTotalShare(0.00)
-                .build();
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            return GroupSummaryResponse.builder()
+                    .groupId(groupId)
+                    .groupName(group.getName())
+                    .totalGroupSpending(group.getTotalAmount())
+                    .userPaidFor(0.00)
+                    .userTotalShare(0.00)
+                    .build();
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
+        }
     }
 
     @Override
     public AddGroupResponse getGroupInfo(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        AddGroupResponse addGroupResponse = modelMapper.map(group, AddGroupResponse.class);
-        return addGroupResponse;
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            AddGroupResponse addGroupResponse = modelMapper.map(group, AddGroupResponse.class);
+            return addGroupResponse;
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
+        }
+    }
+
+    @Override
+    @Transactional
+    public DeleteResponse deleteGroup(Integer groupId, String userUuid) {
+        //Find the group by id
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        //Verify if the group is in active state
+        if (group.getStatus() == GroupStatus.ACTIVE){
+            //Verify if userUuid trying to delete is the one who created
+            if (Objects.equals(group.getUser().getUserUuid(), userUuid)){
+                group.setStatus(GroupStatus.DELETED);
+                List<UserGroupLedger> userGroupLedgers = new ArrayList<>(group.getUserGroups());
+                for (UserGroupLedger userGroupLedger : userGroupLedgers){
+
+                    //if user group ledger balance is not 0 then group cannot be deleted
+                    if (userGroupLedger.getNetBalance() == 0.0){
+                        userGroupLedger.setStatus(GroupStatus.DELETED);
+                        userGroupLedgerRepository.save(userGroupLedger);
+                    } else {
+                        throw new BadApiRequestException("Group cannot be deleted as there are some balance left");
+                    }
+                }
+
+                groupRepository.save(group);
+                return DeleteResponse.builder().message("Group deleted successfully").build();
+            } else {
+                throw new BadApiRequestException("Please contact the group admin to delete the group");
+            }
+        } else {
+            throw new BadApiRequestException("This group is no longer in active state");
+        }
     }
 }

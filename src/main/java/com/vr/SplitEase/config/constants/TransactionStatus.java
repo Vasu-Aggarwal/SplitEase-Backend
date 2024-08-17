@@ -3,9 +3,7 @@ package com.vr.SplitEase.config.constants;
 import lombok.Getter;
 
 @Getter
-public enum LedgerStatus {
+public enum TransactionStatus {
     ACTIVE,
-    INACTIVE,
-    DELETED,
-    SETTLED;
+    DELETED;
 }

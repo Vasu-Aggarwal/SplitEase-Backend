@@ -1,6 +1,7 @@
 package com.vr.SplitEase.service.impl;
 
 import com.vr.SplitEase.config.constants.AppConstants;
+import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
 import com.vr.SplitEase.dto.response.*;
@@ -136,7 +137,7 @@ public class UserServiceImpl implements UserService {
 
 
         //Get the list of groups the user is part of
-        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatus(user, GroupStatus.ACTIVE).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
 
         List<Group> groups = userGroupLedgers.stream().map(UserGroupLedger::getGroup).toList();
 

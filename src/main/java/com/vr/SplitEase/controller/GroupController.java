@@ -95,4 +95,10 @@ public class GroupController {
         AddGroupResponse addGroupResponse = groupService.getGroupInfo(groupId);
         return new ResponseEntity<>(addGroupResponse, HttpStatus.OK);
     }
+
+    @DeleteMapping("/deleteGroup/{groupId}/{userUuid}")
+    public ResponseEntity<DeleteResponse> deleteGroup(@PathVariable Integer groupId, @PathVariable String userUuid){
+        DeleteResponse deleteResponse = groupService.deleteGroup(groupId, userUuid);
+        return new ResponseEntity<>(deleteResponse, HttpStatus.OK);
+    }
 }

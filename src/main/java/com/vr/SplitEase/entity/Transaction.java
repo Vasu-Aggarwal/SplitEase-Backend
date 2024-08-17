@@ -1,6 +1,7 @@
 package com.vr.SplitEase.entity;
 
 import com.vr.SplitEase.config.constants.SplitBy;
+import com.vr.SplitEase.config.constants.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,6 +35,8 @@ public class Transaction extends Auditable{
     @JoinColumn(name = "category_id")
     private SubCategory category;
     private String description;
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<UserLedger> userLedger = new HashSet<>();
