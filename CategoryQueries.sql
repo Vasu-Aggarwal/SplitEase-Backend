@@ -65,6 +65,11 @@ INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, n
 INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, name, category_id) values (39, localtimestamp(), localtimestamp(), "", "Other_Utilities", 6);
 INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, name, category_id) values (40, localtimestamp(), localtimestamp(), "", "Cleaning", 6);
 
+-- Adding some status comments on the important tables
+ALTER TABLE transaction MODIFY status INT COMMENT '1=ACTIVE, 0=DELETED';
+ALTER TABLE group_table MODIFY status INT COMMENT '0=INACTIVE, 1=ACTIVE, 2=DELETED';
+ALTER TABLE user_group_ledger MODIFY status INT COMMENT '0=INACTIVE, 1=ACTIVE, 2=DELETED';
+ALTER TABLE user_ledger MODIFY is_active INT COMMENT '0=INACTIVE, 1=ACTIVE, 2=SETTLED, 3=DELETED';
 
 -- Stored procedures
 -- CalculateNetBalance
