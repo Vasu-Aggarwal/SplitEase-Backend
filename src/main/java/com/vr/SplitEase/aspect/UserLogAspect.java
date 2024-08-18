@@ -1,5 +1,6 @@
 package com.vr.SplitEase.aspect;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vr.SplitEase.config.constants.ActivityType;
 import com.vr.SplitEase.dto.request.AddTransactionRequest;
 import com.vr.SplitEase.dto.request.AddUserToGroupRequest;
@@ -26,10 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Aspect
 @Component
@@ -97,15 +95,34 @@ public class UserLogAspect {
         Group group = groupRepository.findById(request.getGroupId()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         //Find the users which were added
         List<User> users = request.getUserList().stream().map(user -> userRepository.findByEmail(user).orElseThrow(() -> new ResourceNotFoundException("User not found"))).toList();
-        //Log for all the users added
-        for (User user: users){
-            String description = String.format("%s added You to \"%s\"", userName, group.getName());
-            userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_USER_TO_GROUP, description);
-        }
-        //Log for the user who added
-        for (User user: users){
-            String description = String.format("You added %s to \"%s\"", user.getName(), group.getName());
-            userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_USER_TO_GROUP, description);
+        try {
+            //Log for all the users added
+            for (User user: users){
+                Map<String, Object> logData = new HashMap<>();
+                logData.put("userUuid", currentUserUuid);
+                logData.put("userName", userName);
+                logData.put("groupId", group.getGroupId());
+                logData.put("description", String.format("%s added You to \"%s\"", userName, group.getName()));
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String logJson = objectMapper.writeValueAsString(logData);
+                userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_USER_TO_GROUP, logJson);
+            }
+            //Log for the user who added
+            for (User user: users){
+                Map<String, Object> logData = new HashMap<>();
+                logData.put("userUuid", currentUserUuid);
+                logData.put("userName", userName);
+                logData.put("groupId", group.getGroupId());
+                logData.put("description", String.format("You added %s to \"%s\"", user.getName(), group.getName()));
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String logJson = objectMapper.writeValueAsString(logData);
+                userLogService.logActivity(currentUserUuid, ActivityType.ADD_USER_TO_GROUP, logJson);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -122,14 +139,29 @@ public class UserLogAspect {
         //Find the group
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-        //Log for the user removed
-        String description = String.format("You were removed from \"%s\" by \"%s\"", group.getName(), userName);
-        userLogService.logActivity(user.getUserUuid(), ActivityType.REMOVE_USER_FROM_GROUP, description);
+        try {
+            //Log for the user removed
+            Map<String, Object> logData = new HashMap<>();
+            logData.put("userUuid", currentUserUuid);
+            logData.put("userName", userName);
+            logData.put("groupId", group.getGroupId());
+            logData.put("description", String.format("You were removed from \"%s\" by \"%s\"", group.getName(), userName));
 
-        //Log for the user who removed
-        String descriptionRemover = String.format("You removed \"%s\" from \"%s\"", user.getName(), group.getName());
-        userLogService.logActivity(currentUserUuid, ActivityType.REMOVE_USER_FROM_GROUP, descriptionRemover);
+            ObjectMapper objectMapper = new ObjectMapper();
+            String logJson = objectMapper.writeValueAsString(logData);
+            userLogService.logActivity(user.getUserUuid(), ActivityType.REMOVE_USER_FROM_GROUP, logJson);
+            logData.clear();
+            //Log for the user who removed
+            logData.put("userUuid", currentUserUuid);
+            logData.put("userName", userName);
+            logData.put("groupId", group.getGroupId());
+            logData.put("description", String.format("You removed \"%s\" from \"%s\"", user.getName(), group.getName()));
 
+            String logJsonRemoved = objectMapper.writeValueAsString(logData);
+            userLogService.logActivity(currentUserUuid, ActivityType.REMOVE_USER_FROM_GROUP, logJsonRemoved);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     // After the deleteGroup method returns, log the activity
@@ -145,15 +177,27 @@ public class UserLogAspect {
         //Find the group
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         List<UserGroupLedger> userGroupLedgers = (List<UserGroupLedger>) group.getUserGroups();
-        for (UserGroupLedger userGroupLedger: userGroupLedgers){
-            //Log for who deleted the group
-            if (userGroupLedger.getUser().getUserUuid() == currentUserUuid){
-                String description = String.format("You deleted \"%s\"", group.getName());
-                userLogService.logActivity(currentUserUuid, ActivityType.DELETE_GROUP, description);
-            } else { //Log for other members of the group
-                String description = String.format("\"%s\" was deleted by \"%s\"", group.getName(), userName);
-                userLogService.logActivity(userGroupLedger.getUser().getUserUuid(), ActivityType.DELETE_GROUP, description);
+        try {
+            for (UserGroupLedger userGroupLedger : userGroupLedgers) {
+                //Log for who deleted the group
+                if (userGroupLedger.getUser().getUserUuid() == currentUserUuid) {
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("groupId", group.getGroupId());
+                    logData.put("description", String.format("You deleted \"%s\"", group.getName()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(currentUserUuid, ActivityType.DELETE_GROUP, logJson);
+                } else { //Log for other members of the group
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("groupId", group.getGroupId());
+                    logData.put("description", String.format("\"%s\" was deleted by \"%s\"", group.getName(), userName));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(userGroupLedger.getUser().getUserUuid(), ActivityType.DELETE_GROUP, logJson);
+                }
             }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -175,15 +219,29 @@ public class UserLogAspect {
             users.add(user);
         }
 
-        for (User user: users){
-            //Log for payer user
-            if (Objects.equals(user.getUserUuid(), addTransactionRequest.getUserUuid())){
-                String description = String.format("You added \"%s\" in \"%s\"", addTransactionResponse.getDescription(), group.getName());
-                userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, description);
-            } else { //Log for other users
-                String description = String.format("\"%s\" added \"%s\" in \"%s\"", payingUser.getName(), addTransactionResponse.getDescription(), group.getName());
-                userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, description);
+        try {
+            for (User user : users) {
+                //Log for payer user
+                if (Objects.equals(user.getUserUuid(), addTransactionRequest.getUserUuid())) {
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("groupId", group.getGroupId());
+                    logData.put("transactionId", addTransactionResponse.getTransactionId());
+                    logData.put("description", String.format("You added \"%s\" in \"%s\"", addTransactionResponse.getDescription(), group.getName()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, logJson);
+                } else { //Log for other users
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("groupId", group.getGroupId());
+                    logData.put("transactionId", addTransactionResponse.getTransactionId());
+                    logData.put("description", String.format("\"%s\" added \"%s\" in \"%s\"", payingUser.getName(), addTransactionResponse.getDescription(), group.getName()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, logJson);
+                }
             }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -196,13 +254,23 @@ public class UserLogAspect {
         User payingUser = userRepository.findById(settleUpTransactionRequest.getPayer()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User receivingUser = userRepository.findById(settleUpTransactionRequest.getReceiver()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        //Log for payer user
-        String description = String.format("You paid \"%s\" Rs. %.2f", receivingUser.getName(), settleUpTransactionResponse.getAmount());
-        userLogService.logActivity(payingUser.getUserUuid(), ActivityType.SETTLED, description);
-
-        //Log for other users
-        String descriptionReceiver = String.format("\"%s\" paid You Rs. %.2f", payingUser.getName(), settleUpTransactionResponse.getAmount());
-        userLogService.logActivity(receivingUser.getUserUuid(), ActivityType.SETTLED, descriptionReceiver);
+        try {
+            //Log for payer user
+            Map<String, Object> logData = new HashMap<>();
+            logData.put("settleId", settleUpTransactionResponse.getTransactionId());
+            logData.put("description", String.format("You paid \"%s\" Rs. %.2f", receivingUser.getName(), settleUpTransactionResponse.getAmount()));
+            ObjectMapper objectMapper = new ObjectMapper();
+            String logJson = objectMapper.writeValueAsString(logData);
+            userLogService.logActivity(payingUser.getUserUuid(), ActivityType.SETTLED, logJson);
+            logData.clear();
+            //Log for other users
+            logData.put("settleId", settleUpTransactionResponse.getTransactionId());
+            logData.put("description", String.format("\"%s\" paid You Rs. %.2f", payingUser.getName(), settleUpTransactionResponse.getAmount()));
+            String logJsonOther = objectMapper.writeValueAsString(logData);
+            userLogService.logActivity(receivingUser.getUserUuid(), ActivityType.SETTLED, logJsonOther);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     // After the deleteTransaction method returns, log the activity
@@ -219,15 +287,29 @@ public class UserLogAspect {
 
         //Find the user ledger for the transaction
         Set<UserLedger> userLedgers = transaction.getUserLedger();
-        for (UserLedger userLedger: userLedgers){
-            //Log for the user who deleted the transaction
-            if (Objects.equals(userLedger.getUser().getUserUuid(), currentUserUuid)){
-                String description = String.format("You deleted \"%s\" from \"%s\"", transaction.getDescription(), transaction.getGroup().getName());
-                userLogService.logActivity(currentUserUuid, ActivityType.DELETE_TRANSACTION, description);
-            } else { //Log for other users
-                String description = String.format("\"%s\" deleted \"%s\" from \"%s\"", currentUser.getName(), transaction.getDescription(), transaction.getGroup().getName());
-                userLogService.logActivity(userLedger.getUser().getUserUuid(), ActivityType.DELETE_TRANSACTION, description);
+        try {
+            for (UserLedger userLedger : userLedgers) {
+                //Log for the user who deleted the transaction
+                if (Objects.equals(userLedger.getUser().getUserUuid(), currentUserUuid)) {
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("transactionId", transaction.getTransactionId());
+                    logData.put("groupId", transaction.getGroup().getGroupId());
+                    logData.put("description", String.format("You deleted \"%s\" from \"%s\"", transaction.getDescription(), transaction.getGroup().getName()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(currentUserUuid, ActivityType.DELETE_TRANSACTION, logJson);
+                } else { //Log for other users
+                    Map<String, Object> logData = new HashMap<>();
+                    logData.put("transactionId", transaction.getTransactionId());
+                    logData.put("groupId", transaction.getGroup().getGroupId());
+                    logData.put("description", String.format("\"%s\" deleted \"%s\" from \"%s\"", currentUser.getName(), transaction.getDescription(), transaction.getGroup().getName()));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String logJson = objectMapper.writeValueAsString(logData);
+                    userLogService.logActivity(userLedger.getUser().getUserUuid(), ActivityType.DELETE_TRANSACTION, logJson);
+                }
             }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 }
