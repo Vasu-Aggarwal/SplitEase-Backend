@@ -152,7 +152,7 @@ public class UserLogAspect {
         AddTransactionRequest addTransactionRequest = (AddTransactionRequest) joinPoint.getArgs()[0];
         AddTransactionResponse addTransactionResponse = (AddTransactionResponse) result;
 
-        User payingUser = userRepository.findByEmail(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User payingUser = userRepository.findById(addTransactionRequest.getUserUuid()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //Find the group
         Group group = groupRepository.findById(addTransactionRequest.getGroup()).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
@@ -168,10 +168,10 @@ public class UserLogAspect {
             //Log for payer user
             if (Objects.equals(user.getUserUuid(), addTransactionRequest.getUserUuid())){
                 String description = String.format("You added \"%s\" in \"%s\"", addTransactionResponse.getDescription(), group.getName());
-                userLogService.logActivity(user.getUserUuid(), ActivityType.REMOVE_USER_FROM_GROUP, description);
+                userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, description);
             } else { //Log for other users
                 String description = String.format("\"%s\" added \"%s\" in \"%s\"", payingUser.getName(), addTransactionResponse.getDescription(), group.getName());
-                userLogService.logActivity(user.getUserUuid(), ActivityType.REMOVE_USER_FROM_GROUP, description);
+                userLogService.logActivity(user.getUserUuid(), ActivityType.ADD_TRANSACTION, description);
             }
         }
     }
