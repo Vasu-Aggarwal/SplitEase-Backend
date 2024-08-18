@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
                 user = modelMapper.map(createUserRequest, User.class);
                 if (createUserRequest.getMobile().isBlank()){
                     user.setMobile(null);
-                } else{
+                } else if (createUserRequest.getEmail().isBlank()){
                     user.setEmail(null);
                 }
                 if (createUserRequest.getPassword().isBlank()){
