@@ -77,10 +77,21 @@ public class UserLogAspect {
     @AfterReturning(pointcut = "addUpdateGroup()", returning = "result")
     public void logAddUpdateGroupActivity(JoinPoint joinPoint, Object result) {
         String groupName = (String) joinPoint.getArgs()[0];
+        AddGroupResponse addGroupResponse = (AddGroupResponse) result;
         //Log activity
         String currentUserUuid = currentUserService.getCurrentUserUuid().orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
-        String description = String.format("You created a new group \"%s\".", groupName);
-        userLogService.logActivity(currentUserUuid, ActivityType.ADD_GROUP, description);
+        try {
+            Map<String, Object> logData = new HashMap<>();
+            logData.put("userUuid", currentUserUuid);
+            logData.put("groupId", addGroupResponse.getGroupId());
+            logData.put("description", String.format("You created a new group \"%s\".", groupName));
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            String logJson = objectMapper.writeValueAsString(logData);
+            userLogService.logActivity(currentUserUuid, ActivityType.ADD_GROUP, logJson);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     // After the addUserToGroup method returns, log the activity
