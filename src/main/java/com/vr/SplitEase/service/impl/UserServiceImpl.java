@@ -5,14 +5,12 @@ import com.vr.SplitEase.config.constants.GroupStatus;
 import com.vr.SplitEase.dto.request.CreateUserRequest;
 import com.vr.SplitEase.dto.request.SearchUserByEmailMobileRequest;
 import com.vr.SplitEase.dto.response.*;
-import com.vr.SplitEase.entity.Group;
-import com.vr.SplitEase.entity.Role;
-import com.vr.SplitEase.entity.User;
-import com.vr.SplitEase.entity.UserGroupLedger;
+import com.vr.SplitEase.entity.*;
 import com.vr.SplitEase.exception.BadApiRequestException;
 import com.vr.SplitEase.exception.ResourceNotFoundException;
 import com.vr.SplitEase.repository.RoleRepository;
 import com.vr.SplitEase.repository.UserGroupLedgerRepository;
+import com.vr.SplitEase.repository.UserLogRepository;
 import com.vr.SplitEase.repository.UserRepository;
 import com.vr.SplitEase.service.GroupService;
 import com.vr.SplitEase.service.UserService;
@@ -23,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,13 +35,15 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserGroupLedgerRepository userGroupLedgerRepository;
+    private final UserLogRepository userLogRepository;
 
-    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserGroupLedgerRepository userGroupLedgerRepository) {
+    public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserGroupLedgerRepository userGroupLedgerRepository, UserLogRepository userLogRepository) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.userGroupLedgerRepository = userGroupLedgerRepository;
+        this.userLogRepository = userLogRepository;
     }
 
     @Override
@@ -165,5 +166,12 @@ public class UserServiceImpl implements UserService {
 
         List<GetUserByUuidResponse> response = users.stream().map(user -> modelMapper.map(user, GetUserByUuidResponse.class)).toList();
         return response;
+    }
+
+    @Override
+    public List<GetUserLogsResponse> getUserLogs(String userUuid) {
+        List<UserLogs> userLogs = userLogRepository.findByUserUuid(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        List<GetUserLogsResponse> getUserLogsResponses = userLogs.stream().map(userLog -> modelMapper.map(userLog, GetUserLogsResponse.class)).sorted(Comparator.comparing(GetUserLogsResponse::getCreatedOn).reversed()).toList();
+        return getUserLogsResponses;
     }
 }

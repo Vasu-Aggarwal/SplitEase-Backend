@@ -59,4 +59,10 @@ public class UserController {
         return ResponseEntity.ok(getUserByUuidResponse);
     }
 
+    @GetMapping("/getUserActivities/{userUuid}")
+    public ResponseEntity<List<GetUserLogsResponse>> getUserActivities(@PathVariable String userUuid){
+        List<GetUserLogsResponse> getUserLogsResponses = userService.getUserLogs(userUuid);
+        return ResponseEntity.ok(getUserLogsResponses);
+    }
+
 }
