@@ -31,7 +31,7 @@ public class GroupController {
     public ResponseEntity<AddGroupResponse> addUpdateGroup(
             @RequestParam("name") String name,
             @RequestParam(value = "id", required = false) Integer groupId,
-            @RequestParam("image")MultipartFile image
+            @RequestParam(value = "image", required = false)MultipartFile image
             ){
         AddGroupResponse addGroupResponse = groupService.addUpdateGroup(name, groupId, image);
         return new ResponseEntity<>(addGroupResponse, HttpStatus.OK);
