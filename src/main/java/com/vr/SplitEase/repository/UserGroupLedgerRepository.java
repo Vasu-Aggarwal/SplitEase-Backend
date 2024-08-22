@@ -15,5 +15,6 @@ public interface UserGroupLedgerRepository extends JpaRepository<UserGroupLedger
     Boolean existsByUserAndGroup(User user, Group group);
     Optional<UserGroupLedger> findByUserAndGroup(User user, Group group);
     Optional<List<UserGroupLedger>> findByGroup(Group groupId);
+    Optional<List<UserGroupLedger>> findByGroupAndStatus(Group groupId, Integer status);
     Optional<List<UserGroupLedger>> findByUserAndStatus(User user, Integer status);
 }

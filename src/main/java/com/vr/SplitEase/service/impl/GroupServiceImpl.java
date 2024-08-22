@@ -311,7 +311,8 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         //Verify group is in active state
         if (group.getStatus() == GroupStatus.ACTIVE.getStatus()) {
-            List<GetGroupMembersV2Response> userList = group.getUserGroups().stream().map(userGroupLedger ->
+            List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByGroupAndStatus(group, GroupStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("User group ledger not found"));
+            List<GetGroupMembersV2Response> userList = userGroupLedgers.stream().map(userGroupLedger ->
                             modelMapper.map(userGroupLedger.getUser(), GetGroupMembersV2Response.class)
                     ).sorted(Comparator.comparing(GetGroupMembersV2Response::getName))
                     .collect(Collectors.toList());
