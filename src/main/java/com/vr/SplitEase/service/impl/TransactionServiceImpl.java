@@ -76,6 +76,7 @@ public class TransactionServiceImpl implements TransactionService {
                 SubCategory category = categoryRepository.findByName(addTransactionRequest.getCategory()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
                 Transaction transaction = modelMapper.map(addTransactionRequest, Transaction.class);
                 transaction.setUser(user);
+                transaction.setDescription(addTransactionRequest.getDescription().trim());
                 transaction.setGroup(group);
                 transaction.setCategory(category);
                 transaction.setStatus(TransactionStatus.ACTIVE.getStatus()); //set the status of transaction as active
@@ -252,6 +253,7 @@ public class TransactionServiceImpl implements TransactionService {
             transaction.setUser(user);
             transaction.setGroup(group);
             transaction.setCategory(category);
+            transaction.setDescription(addTransactionRequest.getDescription().trim());
             transaction = transactionRepository.save(transaction);
 
             //check the total amount set to all the users must be equal to the transaction amount

@@ -55,9 +55,10 @@ public class UserServiceImpl implements UserService {
             user.setEmail(createUserRequest.getEmail());
             user.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
             user.setMobile(createUserRequest.getMobile());
-            user.setName(createUserRequest.getName());
+            user.setName(createUserRequest.getName().trim());
         } else {
             //Create new user
+            user.setName(createUserRequest.getName().trim());
             //set role
             if (!createUserRequest.getEmail().isBlank() || !createUserRequest.getMobile().isBlank()){
                 user = modelMapper.map(createUserRequest, User.class);
