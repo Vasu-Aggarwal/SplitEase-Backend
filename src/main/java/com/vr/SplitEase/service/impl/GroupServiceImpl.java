@@ -279,7 +279,12 @@ public class GroupServiceImpl implements GroupService {
             if (userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()){
                 //remove the user only if his net balance is 0
                 if (userGroupLedger.getNetBalance() == 0.0){
-                    userGroupLedgerRepository.delete(userGroupLedger);
+                    List<GetGroupMembersV2Response> members = getGroupMembersV2(groupId);
+                    if (members.size() == 1){
+                        throw new BadApiRequestException("Cannot remove the last user. Instead delete the group");
+                    } else {
+                        userGroupLedgerRepository.delete(userGroupLedger);
+                    }
 //                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
 //                    userGroupLedgerRepository.save(userGroupLedger);
                 } else {

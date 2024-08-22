@@ -10,9 +10,10 @@ INSERT INTO category values (3, localtimestamp(), localtimestamp(), "Home");
 INSERT INTO category values (4, localtimestamp(), localtimestamp(), "Life");
 INSERT INTO category values (5, localtimestamp(), localtimestamp(), "Transportation");
 INSERT INTO category values (6, localtimestamp(), localtimestamp(), "Utilities");
+INSERT INTO category values (7, localtimestamp(), localtimestamp(), "Uncategorized");
 
 -- Create sub categories
-
+INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, name, category_id) values (41, localtimestamp(), localtimestamp(), "https://res.cloudinary.com/dyhym5vjz/image/upload/v1723101989/Game_rmrcfg.png", "General", 7);
 -- Entertainment
 INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, name, category_id) values (1, localtimestamp(), localtimestamp(), "https://res.cloudinary.com/dyhym5vjz/image/upload/v1723101989/Game_rmrcfg.png", "Games", 1);
 INSERT INTO sub_category (sub_category_id, created_on, modified_on, image_url, name, category_id) values (2, localtimestamp(), localtimestamp(), "https://res.cloudinary.com/dyhym5vjz/image/upload/v1723102012/Movie_axib2g.png", "Movies", 1);

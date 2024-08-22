@@ -26,6 +26,8 @@ public class GetTransactionByIdResponse {
     private List<UserLedgerDetails> userLedgerDetails = new ArrayList<>();
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime createdOn;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDateTime modifiedOn;
 
     @Getter
     @Setter

@@ -581,6 +581,51 @@ public class TransactionServiceImpl implements TransactionService {
         return getTransactionByGroupResponses;
     }
 
+    @Override
+    @Transactional
+    public GetTransactionByIdResponse restoreTransactionById(Integer transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+        //verify if group is still active. if active then only restore otherwise show alert
+        if (transaction.getGroup().getStatus() == GroupStatus.ACTIVE.getStatus()){
+            if (transaction.getStatus() == TransactionStatus.DELETED.getStatus()){
+                User user = transaction.getUser();
+                Group group = transaction.getGroup();
+
+                group.setTotalAmount(group.getTotalAmount()+transaction.getAmount());
+                groupRepository.save(group);
+
+                // Create a separate list to avoid ConcurrentModificationException
+                List<UserLedger> userLedgers = new ArrayList<>(transaction.getUserLedger());
+
+                //Update the user group ledger for each user
+                for (UserLedger userLedger: userLedgers){
+                    User involvedUser = userLedger.getUser();
+                    Double userAmount = userLedger.getAmount();
+                    UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(involvedUser, group).orElseThrow(() -> new ResourceNotFoundException("User group ledger details not found"));
+
+                    if (!involvedUser.getUserUuid().equals(user.getUserUuid())){
+                        userGroupLedger.setTotalOwed(userGroupLedger.getTotalOwed() + userAmount);
+                    } else {
+                        userGroupLedger.setTotalLent(userGroupLedger.getTotalLent() + userAmount);
+                    }
+                    userGroupLedgerRepository.save(userGroupLedger);
+                    userLedger.setIsActive(LedgerStatus.ACTIVE.getStatus());  //make the user ledger active
+                }
+                entityManager.flush();
+                entityManager.clear();
+                transactionRepository.calculateNetBalance(group.getGroupId());
+                transactionRepository.resetEqualBalances(group.getGroupId());
+                transaction.setStatus(TransactionStatus.ACTIVE.getStatus()); // make the transaction as active and save
+                transactionRepository.save(transaction);
+                return getTransactionById(transactionId);
+            } else {
+                throw new BadApiRequestException("Transaction is already restored");
+            }
+        } else {
+            throw new BadApiRequestException("Transaction cannot be restored as the parent group does not exists more");
+        }
+    }
+
     @Transactional
     public CalculatedDebtResponse calculateDebts(Map<String, Double> creditorsMap, Map<String, Double> debtorsMap, Group group) {
         // Sort debtors map by keys (user names) in ascending order

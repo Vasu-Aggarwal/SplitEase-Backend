@@ -75,4 +75,10 @@ public class TransactionController {
         List<GetTransactionByGroupResponse> addTransactionResponses = transactionService.getTransactionsByUser(userUuid);
         return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
     }
+
+    @PostMapping("/restoreTransaction/{transactionId}")
+    public ResponseEntity<GetTransactionByIdResponse> restoreTransaction(@PathVariable Integer transactionId){
+        GetTransactionByIdResponse addTransactionResponses = transactionService.restoreTransactionById(transactionId);
+        return new ResponseEntity<>(addTransactionResponses, HttpStatus.OK);
+    }
 }

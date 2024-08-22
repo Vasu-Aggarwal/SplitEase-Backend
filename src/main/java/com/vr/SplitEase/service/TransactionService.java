@@ -18,4 +18,5 @@ public interface TransactionService {
     GetTransactionByIdResponse getTransactionById(Integer transactionId);
     List<GetTransactionByGroupResponse> getTransactionsByGroupId(Integer groupId);
     List<GetTransactionByGroupResponse> getTransactionsByUser(String userUuid);
+    GetTransactionByIdResponse restoreTransactionById(Integer transactionId);
 }
