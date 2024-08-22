@@ -58,7 +58,7 @@ public class UserLogAspect {
     public void removeUserFromGroup() {}
 
     //delete group log
-    @Pointcut("execution(* com.vr.SplitEase.service.GroupService.removeUserFromGroup(..))")
+    @Pointcut("execution(* com.vr.SplitEase.service.GroupService.deleteGroup(..))")
     public void deleteGroup() {}
 
     //add transaction log
@@ -113,7 +113,7 @@ public class UserLogAspect {
                 logData.put("userUuid", currentUserUuid);
                 logData.put("userName", userName);
                 logData.put("groupId", group.getGroupId());
-                logData.put("description", String.format("%s added You to \"%s\"", userName, group.getName()));
+                logData.put("description", String.format("\"%s\" added You to \"%s\"", userName, group.getName()));
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 String logJson = objectMapper.writeValueAsString(logData);
@@ -125,7 +125,7 @@ public class UserLogAspect {
                 logData.put("userUuid", currentUserUuid);
                 logData.put("userName", userName);
                 logData.put("groupId", group.getGroupId());
-                logData.put("description", String.format("You added %s to \"%s\"", user.getName(), group.getName()));
+                logData.put("description", String.format("You added \"%s\" to \"%s\"", user.getName(), group.getName()));
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 String logJson = objectMapper.writeValueAsString(logData);
@@ -187,7 +187,7 @@ public class UserLogAspect {
         String userName = currentUser.getName();
         //Find the group
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        List<UserGroupLedger> userGroupLedgers = (List<UserGroupLedger>) group.getUserGroups();
+        Set<UserGroupLedger> userGroupLedgers = group.getUserGroups();
         try {
             for (UserGroupLedger userGroupLedger : userGroupLedgers) {
                 //Log for who deleted the group
