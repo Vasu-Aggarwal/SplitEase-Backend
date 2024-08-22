@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface UserGroupLedgerRepository extends JpaRepository<UserGroupLedger, Integer> {
-    Boolean existsByUserAndGroup(User user, Group group);
+    Boolean existsByUserAndGroupAndStatus(User user, Group group, Integer status);
     Optional<UserGroupLedger> findByUserAndGroup(User user, Group group);
     Optional<List<UserGroupLedger>> findByGroup(Group groupId);
     Optional<List<UserGroupLedger>> findByGroupAndStatus(Group groupId, Integer status);

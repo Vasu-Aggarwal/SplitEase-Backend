@@ -117,7 +117,7 @@ public class GroupServiceImpl implements GroupService {
             //check whether no user present in the list is already present with same group
             List<String> conflictingUsers = new ArrayList<>();
             for (User user : users) {
-                if (userGroupLedgerRepository.existsByUserAndGroup(user, group)) {
+                if (userGroupLedgerRepository.existsByUserAndGroupAndStatus(user, group, GroupStatus.ACTIVE.getStatus())) {
                     conflictingUsers.add(user.getEmail());
                 }
             }
@@ -260,6 +260,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public DeleteResponse removeUserFromGroup(Integer groupId, String userUuid) {
 
         //Get the user
@@ -276,8 +277,9 @@ public class GroupServiceImpl implements GroupService {
             if (userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()){
                 //remove the user only if his net balance is 0
                 if (userGroupLedger.getNetBalance() == 0.0){
-                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
-                    userGroupLedgerRepository.save(userGroupLedger);
+                    userGroupLedgerRepository.delete(userGroupLedger);
+//                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
+//                    userGroupLedgerRepository.save(userGroupLedger);
                 } else {
                     //When the net balance is not 0 then don't delete the user from the group
                     throw new CannotRemoveUserFromGroupException("Net balance must be 0", 0, userGroupLedger.getNetBalance());
