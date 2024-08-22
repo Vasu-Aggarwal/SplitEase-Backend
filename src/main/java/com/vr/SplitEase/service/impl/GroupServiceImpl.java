@@ -75,6 +75,7 @@ public class GroupServiceImpl implements GroupService {
                     Map imageResponse = cloudinaryImageService.uploadImage(image);
                     group.setImageUrl(imageResponse.get("url").toString());
                 }
+                group.setName(name);
                 groupRepository.save(group);
             } else {
                 throw new BadApiRequestException("This group is no longer in active state");
