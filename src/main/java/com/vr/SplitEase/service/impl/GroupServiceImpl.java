@@ -399,13 +399,9 @@ public class GroupServiceImpl implements GroupService {
                 List<UserGroupLedger> userGroupLedgers = new ArrayList<>(group.getUserGroups());
                 for (UserGroupLedger userGroupLedger : userGroupLedgers){
 
-                    //if user group ledger balance is not 0 then group cannot be deleted
-                    if (userGroupLedger.getNetBalance() == 0.0){
-                        userGroupLedger.setStatus(GroupStatus.DELETED.getStatus());
-                        userGroupLedgerRepository.save(userGroupLedger);
-                    } else {
-                        throw new BadApiRequestException("Group cannot be deleted as there are some balance left");
-                    }
+                    //Delete the group no matter if any balance is remaining or not
+                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus());
+                    userGroupLedgerRepository.save(userGroupLedger);
                 }
 
                 groupRepository.save(group);
