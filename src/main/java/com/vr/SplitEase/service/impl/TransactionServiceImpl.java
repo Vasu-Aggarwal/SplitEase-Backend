@@ -503,7 +503,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
         //Verify transaction should be in active status
-        if (transaction.getStatus() == TransactionStatus.ACTIVE.getStatus()){
+//        if (transaction.getStatus() == TransactionStatus.ACTIVE.getStatus()){
             //find the user ledger details according to the transaction
             List<UserLedger> userLedgers = userLedgerRepository.findByTransaction(transaction).orElseThrow(() -> new ResourceNotFoundException("User ledger details not found"));
 
@@ -519,9 +519,9 @@ public class TransactionServiceImpl implements TransactionService {
             getTransactionByIdResponse.setUserLedgerDetails(userLedgerDetails);
 
             return getTransactionByIdResponse;
-        } else {
-            throw new BadApiRequestException("This transaction is no longer in active state");
-        }
+//        } else {
+//            throw new BadApiRequestException("This transaction is no longer in active state");
+//        }
     }
 
     @Override
