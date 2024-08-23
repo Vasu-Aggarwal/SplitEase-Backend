@@ -31,10 +31,13 @@ spring:
 
 logging:
   level:
-    root: DEBUG
+#    root: DEBUG
     org:
       springframework:
         security: DEBUG
       hibernate:
         SQL: DEBUG
         type: TRACE
+        com:
+          vr:
+            SplitEase: DEBUG

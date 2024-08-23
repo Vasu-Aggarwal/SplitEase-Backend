@@ -532,9 +532,33 @@ public class TransactionServiceImpl implements TransactionService {
 //            return getTransactionByGroupResponse;
 //        } else {
             Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+            //find the user group ledger for that particular group and logged in user
+            User currentUser = currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
             //Verify group is in active state
-            if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
-                List<Transaction> transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+            if (group.getStatus() == GroupStatus.ACTIVE.getStatus() || group.getStatus() == GroupStatus.INACTIVE.getStatus()) {
+                // check if the user is in deleted state then show only those transactions which are of less time stamp than user group ledger modified on date
+
+                // Retrieve the user's group ledger
+                UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(currentUser, group)
+                        .orElseThrow(() -> new ResourceNotFoundException("User group ledger not found"));
+
+                List<Transaction> transactions = new ArrayList<>();
+
+                // Check if the user is in a deleted state
+                if (userGroupLedger.getStatus() == GroupStatus.DELETED.getStatus()) {
+                    // If the user is deleted, show only those transactions with a timestamp earlier than the ledger's modifiedOn date
+                    transactions = transactionRepository.findByGroupAndStatusAndCreatedOnBefore(
+                            group,
+                            TransactionStatus.ACTIVE.getStatus(),
+                            userGroupLedger.getModifiedOn()
+                    ).orElseThrow(() -> new ResourceNotFoundException("No transactions found before user's deletion"));
+
+                } else {
+                    transactions = transactionRepository.findByGroupAndStatus(group, TransactionStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+                }
+
                 List<GetTransactionByGroupResponse> transactionResponses = new ArrayList<>(transactions.stream().map(transaction -> {
                     LoggedInUserTransaction loggedInUserTransaction = userLedgerRepository.findByTransactionAndUser(transaction, currentUserService.getCurrentUser().orElseThrow(() -> new ResourceNotFoundException("User not found"))).map(userLedger1 -> LoggedInUserTransaction.builder()
                                     .userUuid(userLedger1.getUser().getUserUuid())

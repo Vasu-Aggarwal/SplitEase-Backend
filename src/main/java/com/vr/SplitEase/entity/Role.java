@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "role")
-public class Role {
+public class Role extends Auditable {
     @Id
     @Column(name = "role_id")
     private Integer roleId;

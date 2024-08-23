@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Getter
 @Entity
 @Table(name = "user_group_ledger", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_uuid", "group_id"})})
-public class UserGroupLedger{
+public class UserGroupLedger extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

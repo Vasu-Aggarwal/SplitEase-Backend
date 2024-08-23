@@ -281,12 +281,14 @@ public class GroupServiceImpl implements GroupService {
                 if (userGroupLedger.getNetBalance() == 0.0){
                     List<GetGroupMembersV2Response> members = getGroupMembersV2(groupId);
                     if (members.size() == 1){
-                        throw new BadApiRequestException("Cannot remove the last user. Instead delete the group");
+                        userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
+                        userGroupLedgerRepository.save(userGroupLedger);
+                        group.setStatus(GroupStatus.INACTIVE.getStatus());
+                        groupRepository.save(group);
                     } else {
-                        userGroupLedgerRepository.delete(userGroupLedger);
+                        userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
+                        userGroupLedgerRepository.save(userGroupLedger);
                     }
-//                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus()); //delete the user from the group
-//                    userGroupLedgerRepository.save(userGroupLedger);
                 } else {
                     //When the net balance is not 0 then don't delete the user from the group
                     throw new CannotRemoveUserFromGroupException("Net balance must be 0", 0, userGroupLedger.getNetBalance());
@@ -337,7 +339,7 @@ public class GroupServiceImpl implements GroupService {
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         //Get the list of groups the user is part of
-        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatus(user, GroupStatus.ACTIVE.getStatus()).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+        List<UserGroupLedger> userGroupLedgers = userGroupLedgerRepository.findByUserAndStatusInAndGroupStatus(user, List.of(GroupStatus.ACTIVE.getStatus(), GroupStatus.DELETED.getStatus()), List.of(GroupStatus.ACTIVE.getStatus(), GroupStatus.INACTIVE.getStatus())).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
         List<GetGroupsByUserResponse> groups = new ArrayList<>();
         if (searchBy.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
             groups = userGroupLedgers.stream().map(userGroupLedger -> {
@@ -387,7 +389,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public AddGroupResponse getGroupInfo(Integer groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-        if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
+        if (group.getStatus() == GroupStatus.ACTIVE.getStatus() || group.getStatus() == GroupStatus.INACTIVE.getStatus()){
             AddGroupResponse addGroupResponse = modelMapper.map(group, AddGroupResponse.class);
             return addGroupResponse;
         } else {
