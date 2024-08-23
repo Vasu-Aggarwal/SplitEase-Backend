@@ -405,22 +405,35 @@ public class GroupServiceImpl implements GroupService {
 
         //Verify if the group is in active state
         if (group.getStatus() == GroupStatus.ACTIVE.getStatus()){
-            //Verify if userUuid trying to delete is the one who created
-            if (Objects.equals(group.getUser().getUserUuid(), userUuid)){
-                group.setStatus(GroupStatus.DELETED.getStatus());
-                List<UserGroupLedger> userGroupLedgers = new ArrayList<>(group.getUserGroups());
-                for (UserGroupLedger userGroupLedger : userGroupLedgers){
+            group.setStatus(GroupStatus.DELETED.getStatus());
+            List<UserGroupLedger> userGroupLedgers = new ArrayList<>(group.getUserGroups());
 
-                    //Delete the group no matter if any balance is remaining or not
-                    userGroupLedger.setStatus(GroupStatus.DELETED.getStatus());
-                    userGroupLedgerRepository.save(userGroupLedger);
-                }
-
-                groupRepository.save(group);
-                return DeleteResponse.builder().message("Group deleted successfully").build();
-            } else {
-                throw new BadApiRequestException("Please contact the group admin to delete the group");
+            for (UserGroupLedger userGroupLedger : userGroupLedgers){
+                //Delete the group no matter if any balance is remaining or not
+                userGroupLedger.setStatus(GroupStatus.DELETED.getStatus());
+                userGroupLedgerRepository.save(userGroupLedger);
             }
+
+            groupRepository.save(group);
+            return DeleteResponse.builder().message("Group deleted successfully").build();
+        } else if (group.getStatus() == GroupStatus.INACTIVE.getStatus()){
+
+            //find the user
+            User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            UserGroupLedger userGroupLedger = userGroupLedgerRepository.findByUserAndGroup(user, group).orElseThrow(() -> new ResourceNotFoundException("Something went wrong"));
+
+            //Delete the particular user in case user is deleted and group is inactive --> which means
+            //the group does not have any active users and group becomes stale forever
+            group.getUserGroups().remove(userGroupLedger);
+            userGroupLedgerRepository.delete(userGroupLedger);
+
+            if (group.getUserGroups().isEmpty()){
+                group.setStatus(GroupStatus.DELETED.getStatus());
+                groupRepository.save(group);
+            }
+
+            return DeleteResponse.builder().message("Group deleted successfully").build();
+
         } else {
             throw new BadApiRequestException("This group is no longer in active state");
         }
