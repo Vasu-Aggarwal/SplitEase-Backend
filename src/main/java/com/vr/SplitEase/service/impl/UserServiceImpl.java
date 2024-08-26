@@ -121,13 +121,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userUuid).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         double totalNetBalance = 0.0;
         if (searchVal.equalsIgnoreCase(AppConstants.ALL_GROUPS.getValue())){
-            totalNetBalance = user.getUserGroups().stream().mapToDouble(UserGroupLedger::getNetBalance).sum();
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()).mapToDouble(UserGroupLedger::getNetBalance).sum();
         } else if (searchVal.equalsIgnoreCase(AppConstants.GROUPS_YOU_OWE.getValue())){
-            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()>0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()>0 && userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()).mapToDouble(UserGroupLedger::getNetBalance).sum();
         } else if (searchVal.equalsIgnoreCase(AppConstants.GROUPS_THAT_OWE_YOU.getValue())){
-            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()<0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()<0 && userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()).mapToDouble(UserGroupLedger::getNetBalance).sum();
         } else if (searchVal.equalsIgnoreCase(AppConstants.OUTSTANDING_BALANCE.getValue())){
-            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()!=0).mapToDouble(UserGroupLedger::getNetBalance).sum();
+            totalNetBalance = user.getUserGroups().stream().filter(userGroupLedger -> userGroupLedger.getNetBalance()!=0 && userGroupLedger.getStatus() == GroupStatus.ACTIVE.getStatus()).mapToDouble(UserGroupLedger::getNetBalance).sum();
         }
         return GetTotalNetBalance.builder().netBalance(totalNetBalance).build();
     }
